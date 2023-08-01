@@ -1,0 +1,12 @@
+name: CCS
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  # Python - needs to be pinned to 2.7, as per PacBio's github page
+  - python=2.7
+  # PacBio ccs
+  - pbccs
+  - samtools
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/CCS

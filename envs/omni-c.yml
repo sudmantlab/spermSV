@@ -1,0 +1,17 @@
+name: OmniC
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - pysam
+  - tabulate
+  - bedtools
+  - matplotlib
+  - pandas
+  - bwa
+  - pairtools
+  - samtools
+  - preseq
+  - pigz
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/OmniC

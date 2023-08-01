@@ -1,0 +1,14 @@
+name: trgt
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - samtools
+  - openjdk==11.0.15
+  - cvbio # for bedfile conversion from UCSC -> NCBI format...
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/trgt
+
+# there's nothing that we need now
+# but creating this to be safe.
+# TRGT binaries are available on github and installed in code/
+# make sure to chmod +x to make sure it can run :)

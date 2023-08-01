@@ -1,0 +1,10 @@
+name: DeepVariant
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  # compatibility with 3.8 according to github repo
+  - python=3.8
+  - samtools
+  - snakemake-minimal
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/DeepVariant

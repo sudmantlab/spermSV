@@ -1,0 +1,9 @@
+name: RepeatMasker
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - snakemake-minimal
+  - repeatmasker
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/HiFiAssembly

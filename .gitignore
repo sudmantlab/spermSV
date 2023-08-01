@@ -1,0 +1,18 @@
+# data folders
+data/
+globus_data/
+
+# output folders
+output/
+logs/
+
+# caches
+.snakemake/
+.DS_Store
+._.DS_Store
+._samples.tsv
+.svn/
+
+# personal notes
+savio_notes.md
+progress_log.md

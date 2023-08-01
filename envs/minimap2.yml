@@ -1,0 +1,9 @@
+name: minimap2
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - minimap2==2.26
+  - samtools
+  - snakemake-minimal
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/minimap2

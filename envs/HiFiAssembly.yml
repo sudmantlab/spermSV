@@ -1,0 +1,16 @@
+name: HiFiAssembly
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+# SL pin to new versions: 2023/07/21
+#  - hifiasm=0.16.1
+#  - purge_dups=1.2.5
+  - hifiasm=0.19.5
+  - purge_dups=1.2.6
+  - blast
+  - bamtools
+  - snakemake-minimal
+  - gfatools
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/HiFiAssembly

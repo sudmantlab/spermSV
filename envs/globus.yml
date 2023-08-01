@@ -1,0 +1,12 @@
+# only a base environment w/ pinned python to keep globus contained
+# it has to be installed via pip
+# pip install globus-cli
+name: globus
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python==3.9.5
+  - snakemake-minimal
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/globus

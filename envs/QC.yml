@@ -1,0 +1,9 @@
+name: QC
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - fastqc
+  - multiqc
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/QC
