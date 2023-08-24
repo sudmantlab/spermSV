@@ -1,0 +1,24 @@
+name: svpop
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  # semi-arbitrary pins
+  - python>=3.9
+  - biopython
+  - numpy==1.19.5
+  - pandas==1.4.4
+  - matplotlib
+  - matplotlib-venn
+  - pysam
+  - snakemake-minimal
+  - intervaltree
+  - samtools
+  - tabix
+  - bcftools
+  - minimap2==2.26
+  - bedtools
+  - repeatmasker
+  - trf
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/svpop

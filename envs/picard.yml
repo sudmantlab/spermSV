@@ -1,0 +1,8 @@
+name: picard
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - samtools
+  - picard
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/picard

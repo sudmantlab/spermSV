@@ -22,3 +22,5 @@ The below envs are local to this repository.
 - ccs.yml
 - DeepVariant.yml
 - straglr.yml
+- trgt.yml
+- svim.yml

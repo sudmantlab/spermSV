@@ -1,0 +1,9 @@
+name: deeptools
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - deeptools
+  - samtools
+  - bedtools
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/deeptools

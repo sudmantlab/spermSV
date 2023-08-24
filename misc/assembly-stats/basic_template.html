@@ -1,0 +1,8 @@
+<div id="assembly_stats">
+<script>
+  d3.json("specimen.json", function(error, json) {
+    if (error) return console.warn(error);
+    asm = new Assembly (json);
+    asm.drawPlot('assembly_stats');
+  })
+</script>

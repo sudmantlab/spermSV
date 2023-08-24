@@ -1,0 +1,7 @@
+name: bedtools
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - bedtools==2.31.0
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/bedtools

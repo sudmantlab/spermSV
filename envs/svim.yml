@@ -1,0 +1,7 @@
+name: svim
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - svim
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/svim

@@ -4,11 +4,13 @@ channels:
   - conda-forge
 dependencies:
   - samtools
+   # for bedfile conversion from UCSC -> NCBI format.
+   # cvbio depends on openjdk version pin
   - openjdk==11.0.15
-  - cvbio # for bedfile conversion from UCSC -> NCBI format...
+  - cvbio
 prefix: /global/scratch/users/stacy-l/miniconda3/envs/trgt
 
-# there's nothing that we need now
+# there's very little here that we need now
 # but creating this to be safe.
 # TRGT binaries are available on github and installed in code/
 # make sure to chmod +x to make sure it can run :)

@@ -1,9 +1,0 @@
-# seems unpopulated/unused, but adding bc was in repo env source - SL 2023/07/21
-name: Polishing
-channels:
-  - bioconda
-  - conda-forge
-  - defaults
-dependencies:
-  - snakemake-minimal
-prefix: /global/scratch/users/stacy-l/miniconda3/envs/polishing

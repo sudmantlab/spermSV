@@ -1,0 +1,233 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+*Run* : *Cmd+Shift+Enter*
+*Insert Chunk*: *Cmd+Option+I*
+*Preview*: *Cmd+Shift+K* 
+
+```{r}
+setwd("~/savio/global/scratch/stacy-l/spermSV/notebooks")
+library(tidyverse)
+library(paletteer)
+library(svglite)
+library(viridis)
+library(vcfR)
+library(plyr)
+```
+
+Use repeatmasker `.out` file to obtain a mapping table of motif to class:
+
+```{r}
+repeat_out <- read_table("../output_t2t/sniffles/mosaic/multi_sample/repeatmasker/multi_sample.filtered.fa.out", skip = 3, col_names = FALSE)
+motif_class = repeat_out %>%
+  select(X10, X11) %>%
+  rename('motif' = X10, 'class' = X11) %>%
+  distinct() # rename, drop all duplicate entries
+```
+
+Load in `.gff` file and clean.
+
+```{r}
+repeat_gff <- read_table("../output_t2t/sniffles/mosaic/multi_sample/repeatmasker/multi_sample.filtered.fa.out.gff", skip = 3, col_names = FALSE)
+colnames(repeat_gff) <- c('ID', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attribute', 'motif', 'unknown1', 'unknown2') # from gff format, padded with motif, unknown1, unknown2 (because I don't know what those are)
+repeat_gff <- repeat_gff %>% 
+  select(-c('attribute', 'unknown1', 'unknown2')) # drop out of frame
+repeat_gff$motif <- repeat_gff$motif %>% 
+  str_extract('(?<=:)(.*)(?=\")') # regex out motif name
+
+```
+
+Merge `.gff` table and motif-class mapping table.
+
+```{r}
+gff_anno <- merge(repeat_gff, motif_class, by = 'motif')
+gff_anno <- gff_anno %>%
+  mutate(length = end-start)
+```
+
+Create "simplified" labels for classes.
+
+```{r}
+gff_anno$broad_class = str_replace(gff_anno$class,'(?=/)(.*)', '')
+```
+
+Raw count histogram:
+```{r}
+raw_count_hist <- ggplot(gff_anno, aes(fill = broad_class, x = length)) + 
+  geom_histogram(color = "#2b2b2b") +
+  xlab("Annotated length") +
+  ylab("Count") +
+  labs(title = "Repeat classes by annotated length",
+  subtitle = "(with raw binned counts)",
+  fill = "Broad repeat classes") +
+  scale_fill_manual(values = paletteer_d("ghibli::PonyoMedium", type = 'continuous', n = 8, direction = -1)) +
+  theme_classic() +
+  theme(text=element_text(family="Helvetica Neue"),
+        plot.title = element_text(size=18))
+
+ggsave(
+  filename="sniffles2_mosaic_repeatmasker_alt_hist_raw.svg",
+  plot = raw_count_hist,
+  device = 'svg',
+  path = "/Users/stacyli/Documents/Lab Meetings/20230809_assets/",
+  scale = 1,
+  width = 8,
+  height = 6,
+  units = "in",
+  dpi = 300
+)
+
+ggsave(
+  filename="sniffles2_mosaic_repeatmasker_alt_hist_raw.png",
+  plot = raw_count_hist,
+  device = 'png',
+  path = "/Users/stacyli/Documents/Lab Meetings/20230809_assets/",
+  scale = 1,
+  width = 8,
+  height = 6,
+  units = "in",
+  dpi = 300
+)
+
+# no PDF for now because of font issue
+```
+
+With sqrt count (y axis) transformation:
+```{r}
+sqrt_count_hist <- ggplot(gff_anno, aes(fill = broad_class, x = length)) + 
+  geom_histogram(color = "#2b2b2b") +
+  xlab("Annotated length") +
+  labs(fill = "Broad repeat classes") +
+  scale_fill_manual(values = paletteer_d("ghibli::PonyoMedium", type = 'continuous', n = 8, direction = -1)) +
+  scale_y_sqrt() +
+  ylab("*Count (sqrt transform)") +
+  labs(title = "Repeat classes by annotated length",
+  subtitle = "(with sqrt-transformed counts)",
+  fill = "Broad repeat classes") +
+  theme_classic() +
+  theme(text=element_text(family="Helvetica Neue"),
+        plot.title = element_text(size=18))
+
+ggsave(
+  filename="sniffles2_mosaic_repeatmasker_alt_hist_sqrt.svg",
+  plot = sqrt_count_hist,
+  device = 'svg',
+  path = "/Users/stacyli/Documents/Lab Meetings/20230809_assets/",
+  scale = 1,
+  width = 8,
+  height = 6,
+  units = "in",
+  dpi = 300
+)
+
+ggsave(
+  filename="sniffles2_mosaic_repeatmasker_alt_hist_sqrt.png",
+  plot = sqrt_count_hist,
+  device = 'png',
+  path = "/Users/stacyli/Documents/Lab Meetings/20230809_assets/",
+  scale = 1,
+  width = 8,
+  height = 6,
+  units = "in",
+  dpi = 300
+)
+```
+
+Plotting counts of classes overall:
+```{r}
+class_count <- gff_anno %>%
+  group_by(class) %>%
+  summarise(count = n())
+class_count <- class_count[order(-class_count$count),]
+
+class_count_plot <-ggplot(class_count, aes(fill = class, x = reorder(class, -count), y = count)) + 
+  geom_bar(color = "#2b2b2b", stat = 'identity', show.legend = FALSE) +
+  xlab("Repeat class") +
+  ylab("Count") +
+  labs(title = "Repeat classes by count",
+  subtitle = "Denoted with specific repeat classes",
+  fill = "Specific repeat classes") +
+  theme_classic() +
+  theme(text=element_text(family="Helvetica Neue"),
+        plot.title = element_text(size=18),
+        axis.text.x = element_text(angle=45, hjust = 1)) +
+  scale_fill_manual(values = paletteer_d("LaCroixColoR::Pure", type = 'continuous', n = 20, direction = 1))
+
+ggsave(
+  filename="sniffles2_mosaic_repeatmasker_alt_count.svg",
+  plot = class_count_plot,
+  device = 'svg',
+  path = "/Users/stacyli/Documents/Lab Meetings/20230809_assets/",
+  scale = 1,
+  width = 8,
+  height = 6,
+  units = "in",
+  dpi = 300
+)
+
+ggsave(
+  filename="sniffles2_mosaic_repeatmasker_alt_count.png",
+  plot = class_count_plot,
+  device = 'png',
+  path = "/Users/stacyli/Documents/Lab Meetings/20230809_assets/",
+  scale = 1,
+  width = 8,
+  height = 6,
+  units = "in",
+  dpi = 300
+)
+
+# no PDF for now because of font issue
+  
+```
+
+Ugh, more plots to jazz up the presentation. Look at the actual VCF...
+
+```{r}
+filtered <- read.vcfR("output_t2t/sniffles/mosaic/multi_sample/ucsc_variant_annotation/multi_sample.filtered.with.header.vcf", verbose = FALSE)
+```
+
+```{r}
+gt_raw <- extract.gt(filtered, element="GT") # in phased format
+gt <- extract.gt(filtered, element="GT", as.numeric=TRUE)
+rownames(gt) <- 1:nrow(gt)
+
+# heatmap of calls
+vcf_heatmap <- heatmap.bp(gt)
+
+ggsave(
+  filename="sniffles2_mosaic_vcf_heatmap.svg",
+  plot = vcf_heatmap,
+  device = 'svg',
+  path = "/Users/stacyli/Documents/Lab Meetings/20230809_assets/",
+  scale = 1,
+  width = 8,
+  height = 4,
+  units = "in",
+  dpi = 300
+)
+
+
+ggsave(
+  filename="sniffles2_mosaic_vcf_heatmap.png",
+  plot = vcf_heatmap,
+  device = 'png',
+  path = "/Users/stacyli/Documents/Lab Meetings/20230809_assets/",
+  scale = 1,
+  width = 8,
+  height = 4,
+  units = "in",
+  dpi = 300
+)
+```
+
+
+Now, on to the variant predicted effect table from UCSC...
+
+```{r}
+# can't think of a good way to deal with this rn so skipping it
+
+ucsc_anno <- read.table("../output_t2t/sniffles/mosaic/multi_sample/ucsc_variant_annotation/20230808_sniffles_mosaic_vep_chr1_to_6.tsv", sep = '\t', skip = 5, header = TRUE)
+```
+

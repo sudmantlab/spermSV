@@ -1,38 +1,20 @@
-# Create data symlinks (if necessary)
-include: "rules/make_symlinks.smk"
+configfile: "config/snakemake/CHM13.config.yml"
+workdir: config['workdir']
 
-# CCS Generation
-# include: "rules/CCS_split.smk"
+# include helper functions
+include: "rules/common.smk"
 
 # HiFi QC
 include: "rules/HiFiAdapterFilt.smk"
 
-# Genome Assembly: hifiasm
-include: "rules/HiFi.smk"
-
-# Mapping: minimap2
+# Mapping
 include: "rules/minimap2.smk"
+include: "rules/winnowmap.smk"
+include: "rules/samtools_utils.smk"
+include: "rules/coverage_stats.smk"
 
-# Read-mapped SV calling
+# Variant calling
 include: "rules/sniffles.smk"
-
-# DeepVariant – small variant calling
-include: "rules/DeepVariant.smk"
-
-# Tandem repeat expansion detection & genotyping
+include: "rules/pepper_etc.smk"
 include: "rules/straglr.smk"
-include: "rules/trgt.smk"
-
-# Genome QC
-# include: "rules/genomeQC.smk"
-
-# Trinity
-#include: "rules/QC_RNASeq.smk"
-#include: "rules/trimmomatic.smk"
-#include: "rules/trinity.smk"
-
-# Annotate
-#include: "rules/mitoHiFi.smk"
-
-# Omni-C mapping to genome
-#include: "rules/omniC.smk"
+include: "rules/trgt_beta.smk"

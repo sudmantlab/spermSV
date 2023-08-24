@@ -2,17 +2,23 @@
 data/
 globus_data/
 
+# software/code folders
+code/
+
 # output folders
 output/
 logs/
+config/
 
 # caches
 .snakemake/
+.ipynb_checkpoints
 .DS_Store
 ._.DS_Store
-._samples.tsv
 .svn/
 
 # personal notes
 savio_notes.md
 progress_log.md
+reorganization.md
+issues/

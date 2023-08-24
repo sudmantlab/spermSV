@@ -1,0 +1,17 @@
+name: jupyter
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  # semi-arbitrary pins
+  - python>=3.9
+  - biopython
+  - numpy
+  - pandas
+  - matplotlib
+  - matplotlib-venn
+  - jupyter
+  - seaborn
+  - plotly
+# prefix: /global/scratch/users/stacy-l/miniconda3/envs/jupyter

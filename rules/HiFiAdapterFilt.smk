@@ -1,7 +1,3 @@
-import os
-import subprocess
-import pandas as pd
-
 # Usage notes:
 # HiFiAdapterFilt is not managed under bioconda – it needs to be installed by cloning from the repo directly
 # note that I've made changes under a new fork to fix a couple of directory path issues w/ temp files
@@ -10,30 +6,39 @@ import pandas as pd
 # the fix is under a fork (stacy-l/HiFiAdapterFilt) – to be contributed to main later if this fixes the issue?
 
 # below: adds HiFiAdapterFilt code directory to path if not already present
-root_path = subprocess.run(["pwd", "-P"], stdout=subprocess.PIPE).stdout.decode('utf-8').strip('\n')
-repo_path = "{root_dir}/code/HiFiAdapterFilt".format(root_dir = root_path)
-db_path = "{root_dir}/code/HiFiAdapterFilt/DB".format(root_dir = root_path)
+repo_path = config['paths']['HiFiAdapterFilt']['repo']
+db_path = config['paths']['HiFiAdapterFilt']['db']
 
 if os.system("echo $PATH | grep /HiFiAdapterFilt") == 256:
     os.environ["PATH"] += os.pathsep + os.pathsep.join([repo_path, db_path])
 
+# output/preprocessing/HiFiAdapterFilt/sudmant/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230601_202536_s4.hifi_reads.bc2050.ccs.filt.fastq.gz
+
 rule HiFiAdapterFilt:
-    version: subprocess.check_output("pbadapterfilt.sh --version", shell=True)
-    input: "data/PacBio-HiFi/homo_sapiens/{specimen}/{lane}/{smrtcell}.ccs.bam"
-    output: 
-        filtered = "output/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.fastq.gz",
-        stats = "output/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.stats",
-    log: "logs/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.bamfilt.log"
+    # Notes:
+    # This script must be executed from within the input file directory.
+    # It *can* write outputs to a specified directory
+    # Thus, values for below params are determined "dynamically" from input/output paths,
+    # in order to guard against issues arising from input/output path restructuring.
+    # For example, the below params evaluate to:
+    # outDir = 'output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}'
+    # inDir = 'data/PacBio-HiFi/{specimen}/{lane}'
+    # inPref ='{smrtcell}.ccs'
+    input: "data/PacBio-HiFi/{specimen}/{lane}/{smrtcell}.ccs.bam"
+    output:
+        filtered = "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.fastq.gz",
+        stats = "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.stats",
+    log: "logs/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.bamfilt.log"
     params:
         outDir = lambda wildcards, output: os.path.dirname(output[0]),
-        inBaseName = lambda wildcards, input: os.path.basename(input[0]),
         inDir = lambda wildcards, input: os.path.dirname(input[0]),
         inPref = lambda wildcards, input: os.path.splitext(os.path.basename(input[0]))[0],        
     conda: "../envs/HiFiAssembly.yml"
     threads: 10
-    shell: """
+    shell: 
+        """
         ROOTPROJDIR=$(pwd -P)
         cd {params.inDir}
         pbadapterfilt.sh -p {params.inPref} -t {threads} -o $ROOTPROJDIR/{params.outDir} &> $ROOTPROJDIR/{log}
         cd -
-    """
+        """

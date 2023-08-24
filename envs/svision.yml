@@ -1,0 +1,24 @@
+name: svision
+channels:
+  - anaconda
+  - conda-forge
+  - bioconda
+  - fastai
+  - defaults
+dependencies:
+  - python==3.6
+  # move to conda, unpin numpy and scipy
+  # this seems to resolve compatibility issues
+  - numpy
+  - scipy
+  - tensorflow==1.14.0
+  # switch from pip to conda mgmt
+  - pysam
+  - pyvcf
+  - beautifulsoup4
+  - intervaltree
+  - opencv-python-headless
+  # can experiment with install trf from conda rather than path?
+  # edit the snakefile later
+  - trf
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/svision
