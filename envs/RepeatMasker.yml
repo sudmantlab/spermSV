@@ -4,6 +4,8 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - snakemake-minimal
-  - repeatmasker
-prefix: /global/scratch/users/stacy-l/miniconda3/envs/HiFiAssembly
+  # repeatmasker + rmblast
+  # repeatmasker 4.1.5 is broken right now... hard pin to 4.1.2
+  - repeatmasker==4.1.2.p1
+  - rmblast
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/repeatmasker

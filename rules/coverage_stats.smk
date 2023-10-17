@@ -1,8 +1,10 @@
 rule estimate_coverage:
-    input: 'output/mapping/{refalias}/minimap2/standard/{specimen}.sorted.merged.bam'
+    input: 
+        bam = 'output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam',
+        index = 'output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam.bai'
     output: temp('output/mapping/{refalias}/coverage_stats/{specimen}.default_hist.txt')
     conda: "../envs/deeptools.yml"
-    shell: 'samtools view -b {input} | genomeCoverageBed -ibam - > {output}'
+    shell: 'samtools view -b {input.bam} | genomeCoverageBed -ibam - > {output}'
 
 rule concat_coverage:
     input: 'output/mapping/{refalias}/coverage_stats/{specimen}.default_hist.txt'
@@ -13,10 +15,12 @@ rule concat_coverage:
     """
     
 rule estimate_coverage_d:
-    input: 'output/mapping/{refalias}/minimap2/standard/{specimen}.sorted.merged.bam'
+    input: 
+        bam = 'output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam',
+        index = 'output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam.bai'
     output: temp('output/mapping/{refalias}/coverage_stats/{specimen}.d_hist.txt')
     conda: "../envs/deeptools.yml"
-    shell: 'samtools view -b {input} | genomeCoverageBed -d -ibam - > {output}'
+    shell: 'samtools view -b {input.bam} | genomeCoverageBed -d -ibam - > {output}'
 
 rule concat_coverage_d:
     input: 'output/mapping/{refalias}/coverage_stats/{specimen}.d_hist.txt'
@@ -27,10 +31,12 @@ rule concat_coverage_d:
     """
 
 rule estimate_coverage_bg:
-    input: 'output/mapping/{refalias}/minimap2/standard/{specimen}.sorted.merged.bam'
+    input: 
+        bam = 'output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam',
+        index = 'output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam.bai'
     output: temp('output/mapping/{refalias}/coverage_stats/{specimen}.bg_hist.txt')
     conda: "../envs/deeptools.yml"
-    shell: 'samtools view -b {input} | genomeCoverageBed -bg -ibam - > {output}'
+    shell: 'samtools view -b {input.bam} | genomeCoverageBed -bg -ibam - > {output}'
 
 rule concat_coverage_bg:
     input: 'output/mapping/{refalias}/coverage_stats/{specimen}.bg_hist.txt'
@@ -41,10 +47,12 @@ rule concat_coverage_bg:
     """
 
 rule estimate_coverage_bga:
-    input: 'output/mapping/{refalias}/minimap2/standard/{specimen}.sorted.merged.bam'
+    input: 
+        bam = 'output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam',
+        index = 'output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam.bai'
     output: temp('output/mapping/{refalias}/coverage_stats/{specimen}.bga_hist.txt')
     conda: "../envs/deeptools.yml"
-    shell: 'samtools view -b {input} | genomeCoverageBed -bga -ibam - > {output}'
+    shell: 'samtools view -b {input.bam} | genomeCoverageBed -bga -ibam - > {output}'
 
 rule concat_coverage_bga:
     input: 'output/mapping/{refalias}/coverage_stats/{specimen}.bga_hist.txt'
@@ -55,7 +63,9 @@ rule concat_coverage_bga:
     """
 
 rule plotcoverage_pdf:
-    input: expand('output/mapping/{refalias}/minimap2/standard/{specimen}.sorted.merged.bam', specimen=specimens, allow_missing = True)
+    input: 
+        bams = expand('output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam', specimen=specimens, allow_missing = True),
+        indices = expand('output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam.bai', specimen=specimens, allow_missing = True)
     output: 
         # doesn't specify the rawcount output, due to wildcard conflict in the output naming
         plot = "output/mapping/{refalias}/coverage_stats/plotCoverage/all/coverage_plot.pdf",
@@ -64,23 +74,25 @@ rule plotcoverage_pdf:
     threads: 20
     params: 
         format = "pdf",
-        title = "'Coverage - mapping against T2T CHM13'"
+        title = "'Coverage - mapping against {refalias}'".format(refalias=config['reference']['alias'])
     shell: 
         """
-        plotCoverage -p {threads} --bamfiles {input} --plotFile {output.plot} --plotFileFormat {params.format} -n 1000000 --plotTitle {params.title} --outRawCounts {output.rawcounts} --ignoreDuplicates --minMappingQuality 10 
+        plotCoverage -p {threads} --bamfiles {input.bams} --plotFile {output.plot} --plotFileFormat {params.format} -n 1000000 --plotTitle {params.title} --outRawCounts {output.rawcounts} --ignoreDuplicates --minMappingQuality 10 
         """
 
 rule plotcoverage_plotly:
-    input: expand('output/mapping/{refalias}/minimap2/standard/{specimen}.sorted.merged.bam', specimen=specimens, allow_missing = True)
+    input: 
+        bams = expand('output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam', specimen=specimens, allow_missing = True),
+        indices = expand('output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam.bai', specimen=specimens, allow_missing = True)
     output:
         plot = "output/mapping/{refalias}/coverage_stats/plotCoverage/all/coverage_plot.html",
     conda: "../envs/deeptools.yml"
     threads: 20
     params: 
         format = "plotly",
-        title = "'Coverage - mapping against T2T CHM13'"
+        title = "'Coverage - mapping against {refalias}'".format(refalias=config['reference']['alias'])
     shell: 
         """
         # forgoes generating raw counts, as generated in pdf rule
-        plotCoverage -p {threads} --bamfiles {input} --plotFile {output.plot} --plotFileFormat {params.format} -n 1000000 --plotTitle {params.title} --ignoreDuplicates --minMappingQuality 10 
+        plotCoverage -p {threads} --bamfiles {input.bams} --plotFile {output.plot} --plotFileFormat {params.format} -n 1000000 --plotTitle {params.title} --ignoreDuplicates --minMappingQuality 10 
         """

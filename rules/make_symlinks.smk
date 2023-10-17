@@ -7,9 +7,6 @@
 # structure, and it'll just assume you want *everything* ending in .bam, .fastq, .fastq.gz, etc. processed.
 # The filtering step will thus take 2-4X as long.
 
-import os
-import pandas as pd
-
 rule make_bam_symlink:
     input:
         "/global/scratch/users/stacy-l/spermSV/globus_data/{lane}/{smrtcell}.bam"

@@ -1,0 +1,10 @@
+name: truvari
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - samtools
+  - python>=3.9
+  - truvari==4.1.0
+  - bcftools==1.17
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/truvari

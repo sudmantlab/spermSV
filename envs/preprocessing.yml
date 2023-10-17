@@ -1,0 +1,12 @@
+name: preprocessing
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  # requires samtools + htslib >= 1.11 for uBAM preproc
+  - samtools>=1.11
+  # requires below for HiFiAdapterFilt
+  - blast
+  - pigz
+  - bamtools
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/preprocessing

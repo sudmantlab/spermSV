@@ -1,0 +1,7 @@
+name: liftover
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - ucsc-liftover==447
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/liftover

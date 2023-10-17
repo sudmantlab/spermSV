@@ -1,11 +1,12 @@
-configfile: "config/snakemake/CHM13.config.yml"
+configfile: "config/snakemake/hg38.config.yml"
 workdir: config['workdir']
 
 # include helper functions
 include: "rules/common.smk"
+include: "rules/make_symlinks.smk"
 
-# HiFi QC
-include: "rules/HiFiAdapterFilt.smk"
+# preprocessing steps
+include: "rules/preprocessing.smk"
 
 # Mapping
 include: "rules/minimap2.smk"
@@ -18,3 +19,9 @@ include: "rules/sniffles.smk"
 include: "rules/pepper_etc.smk"
 include: "rules/straglr.smk"
 include: "rules/trgt_beta.smk"
+
+# Simulations & Benchmarking
+include: "rules/simulations.smk"
+
+# Annotation
+include: "rules/repeatmasker.smk"

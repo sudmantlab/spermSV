@@ -10,7 +10,16 @@ output/
 logs/
 config/
 
+# benchmarks are large and need to be backed up using a different method
+benchmarks/
+
+# notebooks can be backed up for reference, but files internal to the folder are likely deprecated and don't need to be versioned
+notebooks/jupyter/*/*
+!notebooks/jupyter/*/*.ipynb
+
 # caches
+__pycache__/
+.___pycache__
 .snakemake/
 .ipynb_checkpoints
 .DS_Store
@@ -19,6 +28,5 @@ config/
 
 # personal notes
 savio_notes.md
-progress_log.md
-reorganization.md
+progress_logs/
 issues/

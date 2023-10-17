@@ -5,6 +5,8 @@ channels:
 dependencies:
   - winnowmap==2.03
   - meryl==1.4
-  - samtools
+  # requires samtools + htslib >= 1.11 for uBAM preproc
+  - samtools>=1.11
+  - htslib>=1.11
   - snakemake-minimal
 prefix: /global/scratch/users/stacy-l/miniconda3/envs/winnowmap

@@ -12,7 +12,31 @@ db_path = config['paths']['HiFiAdapterFilt']['db']
 if os.system("echo $PATH | grep /HiFiAdapterFilt") == 256:
     os.environ["PATH"] += os.pathsep + os.pathsep.join([repo_path, db_path])
 
-# output/preprocessing/HiFiAdapterFilt/sudmant/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230601_202536_s4.hifi_reads.bc2050.ccs.filt.fastq.gz
+
+rule uBAMtoFastq:
+    # Takes the unaligned BAM file from the sequencing facility and transforms it into a fastq.
+    # This transformation retains the read quality (rq) + MM & ML (methylation information) tags for each read, 
+    # such that they can be carried forward through the mapping step & recorded in the final BAM.
+    input:
+        "data/PacBio-HiFi/{specimen}/{lane}/{smrtcell}.ccs.bam"
+    output:
+        # set this to temp once we know it works
+        "output/preprocessing/uBAMtoFastq/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz"
+    conda: "../envs/preprocessing.yml"
+    threads: 10
+    shell:
+        # extremely janky workaround right now because the savio module of samtools is OLD but also unremovable from my path rn
+        # without forcing it like below
+        # https://unix.stackexchange.com/questions/108873/removing-a-directory-from-path
+        # there's some WEIRD SHIT going on right now where there's conda (???) default on savio in this path
+        # what is HAPPENING
+        # /global/software/sl-7.x86_64/modules/langs/python/3.9/envs
+        """
+        export PATH=`echo $PATH | tr ":" "\n" | grep -v "sl-7.x86_64" | tr "\n" ":"`
+
+        samtools fastq -@ {threads} -c 6 -T MM,ML {input} -0 {output}
+        """
+
 
 rule HiFiAdapterFilt:
     # Notes:
@@ -24,19 +48,22 @@ rule HiFiAdapterFilt:
     # outDir = 'output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}'
     # inDir = 'data/PacBio-HiFi/{specimen}/{lane}'
     # inPref ='{smrtcell}.ccs'
-    input: "data/PacBio-HiFi/{specimen}/{lane}/{smrtcell}.ccs.bam"
+    input: 
+        "output/preprocessing/uBAMtoFastq/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz"
     output:
         filtered = "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.fastq.gz",
         stats = "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.stats",
-    log: "logs/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.bamfilt.log"
+    log: "logs/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.log"
     params:
         outDir = lambda wildcards, output: os.path.dirname(output[0]),
         inDir = lambda wildcards, input: os.path.dirname(input[0]),
-        inPref = lambda wildcards, input: os.path.splitext(os.path.basename(input[0]))[0],        
-    conda: "../envs/HiFiAssembly.yml"
+        inPref = lambda wildcards, input: re.sub('(?<=ccs).*', '', os.path.basename(input[0])),        
+    conda: "../envs/preprocessing.yml"
     threads: 10
     shell: 
         """
+        export PATH=`echo $PATH | tr ":" "\n" | grep -v "sl-7.x86_64" | tr "\n" ":"`
+
         ROOTPROJDIR=$(pwd -P)
         cd {params.inDir}
         pbadapterfilt.sh -p {params.inPref} -t {threads} -o $ROOTPROJDIR/{params.outDir} &> $ROOTPROJDIR/{log}

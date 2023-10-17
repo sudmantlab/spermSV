@@ -1,0 +1,12 @@
+name: spermSV
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  # set up a base analysis environment with only core packages
+  - samtools
+  - python>=3.9
+  - numpy
+  - pandas
+  - snakemake-minimal
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/spermSV

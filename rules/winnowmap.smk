@@ -4,6 +4,7 @@ rule meryl_kmer:
     output:
         meryl_kmer = f"output/mapping/{{refalias}}/winnowmap/standard/meryl/repetitive_k{config['meryl']['k']}_{{refalias}}.txt"
     conda: "../envs/winnowmap.yml"
+    threads: 20
     params:
         DB = "output/mapping/{refalias}/winnowmap/standard/meryl/merylDB",
         k = config['meryl']['k'],
@@ -21,11 +22,12 @@ rule winnowmap:
     output:
         temp("output/mapping/{refalias}/winnowmap/standard/{specimen}/{lane}/{smrtcell}.filt.bam")
     conda: "../envs/winnowmap.yml"
+    threads: 40
     params:
         refgenome = config['reference']['fasta'],
         readgroup = config['winnowmap']['readgroup'],
         minQ = config['samtools']['minQ']
     shell:
         """ 
-        winnowmap -W {input.meryl_kmer} -x map-pb -a -Y -L --eqx  --cs {params.refgenome} {input.hifi} -R {params.readgroup}  | samtools view -q {params.minQ} -hbT {params.refgenome} -o {output}
+        winnowmap -t {threads} -W {input.meryl_kmer} -x map-pb -a -Y -y -L --eqx --cs --MD {params.refgenome} {input.hifi} -R {params.readgroup}  | samtools view -q {params.minQ} -hbT {params.refgenome} -o {output}
         """

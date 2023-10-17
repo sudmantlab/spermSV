@@ -1,0 +1,8 @@
+name: Sim-it
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  # set up a base analysis environment with only core packages
+  - perl-parallel-forkmanager
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/Sim-it
