@@ -10,6 +10,10 @@ output/
 logs/
 config/
 
+# rule/DAG graphs generated while testing stuff
+*.png
+*.svg
+
 # benchmarks are large and need to be backed up using a different method
 benchmarks/
 
@@ -18,6 +22,12 @@ notebooks/jupyter/*/*
 !notebooks/jupyter/*/*.ipynb
 
 # caches
+.*
+# except for git stuff
+!.gitignore
+!.gitattributes
+
+# and, to be safe...
 __pycache__/
 .___pycache__
 .snakemake/
@@ -28,5 +38,5 @@ __pycache__/
 
 # personal notes
 savio_notes.md
-progress_logs/
+obsidian_logs/
 issues/

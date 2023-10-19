@@ -1,58 +1,14 @@
-rule benchmark_subset_ins:
-    # Subsets insertions of config-param size cutoff from the benchmark callset.
-    # This ensures that svtype + svlen cutoffs are matched between callsets, and calculations of precision & recall are accurate.
-    # This rule is mostly for record-keeping and shouldn't *need* to be run, because these files were already manually generated.
-    input:
-        config['reference']['benchmarks']['all']
-    output:
-        vcf = temp(config['reference']['benchmarks']['ins'].strip('.gz')),
-        compressed = config['reference']['benchmarks']['ins']
-    conda:
-        '../envs/truvari.yml'
-    params:
-        svtype = 'INS',
-        svlen = config['simulations']['svlen']
-    threads: 5
-    shell:
-        """
-        bcftools filter -i 'SVTYPE=={params.svtype} & SVLEN <= {params.svlen}' {input} -o {output.vcf}
-        bgzip -@ {threads} {output.vcf}
-        tabix {output.compressed}
-        """
-
-rule benchmark_subset_del:
-    # Subsets deletions of config-param size cutoff from the benchmark callset.
-    # This ensures that svtype + svlen cutoffs are matched between callsets, and calculations of precision & recall are accurate.
-    # This rule is mostly for record-keeping and shouldn't *need* to be run, because these files were already manually generated.
-    input:
-        config['reference']['benchmarks']['all']
-    output:
-        vcf = temp(config['reference']['benchmarks']['del'].strip('.gz')),
-        compressed = config['reference']['benchmarks']['del']
-    conda:
-        '../envs/truvari.yml'
-    params:
-        svtype = 'DEL',
-        svlen = config['simulations']['svlen']
-    threads: 5
-    shell:
-        """
-        bcftools filter -i 'SVTYPE=={params.svtype} & SVLEN <= {params.svlen}' {input} -o {output.vcf}
-        bgzip -@ {threads} {output.vcf}
-        tabix {output.compressed}
-        """
-
 rule fractional_subsample:
-    # Subsamples (with replacement) the parameter-calculated fraction of reads from HG002, in order to achieve the desired spike-in coverage.
-    # This fraction is calculated by taking the desired spike-in coverage and dividing it by the config-specified HG002 coverage.
+    # Subsamples (with replacement) the parameter-calculated fraction of reads from the config-specified control, in order to achieve the desired spike-in coverage.
+    # This fraction is calculated by taking the desired spike-in coverage and dividing it by the config-specified control coverage.
     input:
-        "output/mapping/hg38/winnowmap/standard/HG002.sorted.merged.bam"
+        "output/mapping/hg38/winnowmap/standard/{control}.sorted.merged.bam"
     output:
-        "output/mapping/hg38/simulations/spike_in/{specimen}_{spike_coverage}.bam"
+        "output/mapping/hg38/simulations/spike_in/{spike_coverage}/{control}_{spike_coverage}.bam"
     conda: "../envs/truvari.yml"
     threads: 20
     params:
-        fraction = lambda wildcards, output: np.round(int(wildcards.spike_coverage.strip('X'))/config['simulations']['refcoverage'], 3)
+        fraction = lambda wildcards, output: np.round(int(wildcards.spike_coverage.strip('X'))/config['simulations']['control']['coverage'], 3),
     shell:
         """
         samtools view -@ {threads} -b -s {params.fraction} {input} > {output}
@@ -62,16 +18,18 @@ rule create_spike_in:
     # Merges the specified fraction of "spike-in" sample with the designated "main" file.
     # Right now, the "main" file is hard-coded to sample 894.
     input:
-        main_sample = "output/mapping/hg38/winnowmap/standard/894.sorted.merged.bam",
-        subsampled = "output/mapping/hg38/simulations/spike_in/HG002_{spike_coverage}.bam"
+        main = "output/mapping/hg38/winnowmap/standard/894.sorted.merged.bam",
+        control = expand("output/mapping/hg38/simulations/spike_in/{spike_coverage}/{control}_{spike_coverage}.bam", allow_missing = True, control = config['simulations']['control']['sample'])
     output:
         bam = "output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked.bam",
         index = "output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked.bam.bai"
+    wildcard_constraints:
+        spike_coverage = '[A-Za-z0-9]+'
     conda: "../envs/truvari.yml"
     threads: 20
     shell:
         """
-        samtools merge -r -@ {threads} --output-fmt='BAM' {output.bam} {input.main_sample} {input.subsampled}
+        samtools merge -r -@ {threads} --output-fmt='BAM' {output.bam} {input.main} {input.control}
         samtools index -b -@ {threads} {output.bam}
         """
 
@@ -81,9 +39,11 @@ rule spike_in_sniffles:
         bam = "output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked.bam",
         index = "output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked.bam.bai"
     output:
-        vcf='output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked.vcf.gz',
-        snf='output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked.snf',
-        tbi='output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked.vcf.gz.tbi'
+        vcf='output/mapping/hg38/simulations/spike_in/{spike_coverage}/all.vcf.gz',
+        snf='output/mapping/hg38/simulations/spike_in/{spike_coverage}/all.snf',
+        tbi='output/mapping/hg38/simulations/spike_in/{spike_coverage}/all.vcf.gz.tbi'
+    wildcard_constraints:
+        spike_coverage = '[A-Za-z0-9]+'
     conda:
         '../envs/sniffles.yml'
     threads: 10
@@ -115,114 +75,253 @@ rule spike_in_sniffles:
         --mosaic-qc-strand={params.mosaic_qc_strand} &> {log}
         """
 
-rule spike_in_subset_ins:
-    # Subsets insertions of config-param size cutoff from the vcf callset.
+rule symlink_control:
+    # Creates a symlink for the designated control specimen vcf.
     input:
-        vcf='output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked.vcf.gz'
+        control_vcf = '/global/scratch/users/stacy-l/spermSV/output/mapping/hg38/sniffles/standard/single_sample/{control}.vcf.gz',
     output:
-        vcf = temp('output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked_cutoff_ins.vcf'),
-        compressed = 'output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked_cutoff_ins.vcf.gz',
-        tbi = 'output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked_cutoff_ins.vcf.gz.tbi'
-    conda:
-        '../envs/truvari.yml'
-    params:
-        svtype = 'INS',
-        svlen = config['simulations']['svlen']
-    threads: 10
+        control_link = 'output/mapping/hg38/simulations/control/{control}/all.vcf.gz',
     shell:
         """
-        bcftools filter -i 'SVTYPE=={params.svtype} & SVLEN <= {params.svlen}' {input.vcf} -o {output.vcf}
-        bgzip -@ {threads} {output.vcf}
+        ln -s {input.control_vcf} {output.control_link}
+        """
+
+rule symlink_benchmark:
+    # Creates a symlink for the designated benchmark vcf.
+    input:
+        svtier1_vcf = config['reference']['benchmarks']['svtier1']['all']
+    output:
+        svtier1_link = 'output/mapping/hg38/simulations/benchmarks/svtier1/all.vcf.gz'
+    shell:
+        """
+        ln -s {input.svtier1_vcf} {output.svtier1_link}
+        """
+
+rule svtype_set:
+    # Given a vcf, creates a vcf for the set of given svtype.
+    input:
+        vcf='output/mapping/hg38/simulations/{group}/{subgroup}/all.vcf.gz'
+    output:
+        vcf = temp('output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/all.vcf'),
+        compressed = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/all.vcf.gz',
+        tbi = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/all.vcf.gz.tbi'
+    conda:
+        '../envs/truvari.yml'
+    threads: 1
+    params:
+        outdir = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}'
+    shell:
+        """
+        mkdir -p {params.outdir}
+        bcftools filter -i 'SVTYPE=="{wildcards.svtype}"' {input.vcf} -o {output.vcf}
+        bgzip -@ {threads} -c {output.vcf} > {output.compressed}
         tabix {output.compressed}
         """
 
-use rule spike_in_subset_ins as spike_in_subset_del with:
-    output: 
-        vcf = temp('output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked_cutoff_del.vcf'),
-        compressed = 'output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked_cutoff_del.vcf.gz',
-        tbi = 'output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked_cutoff_del.vcf.gz.tbi'
-    params:
-        svtype = 'DEL',
-        svlen = config['simulations']['svlen']
+# use rule svtype_set as control_svtype_set with:
+#     # Creates a vcf of the set of given svtype from the germline (control) callset.
+#     input:
+#         vcf = 'output/mapping/hg38/sniffles/standard/single_sample/HG002.vcf.gz'
+#     output: 
+#         vcf = temp('output/mapping/hg38/simulations/control/HG002/{svtype}/all.vcf'),
+#         compressed = 'output/mapping/hg38/simulations/control/HG002/{svtype}/all.vcf.gz',
+#         tbi = 'output/mapping/hg38/simulations/control/HG002/{svtype}/all.vcf.gz.tbi'
 
-use rule spike_in_subset_ins as germline_subset_ins with:
-    # Takes the HG002 germline callset and applies the same svtype and svlen filters for benchmark comparison.
+# use rule svtype_set as benchmark_svtype_set with:
+#     # Creates a vcf of the set of given svtype from the benchmark callset (below, hard-set to SV Tier 1).
+#     input:
+#         vcf = config['reference']['benchmarks']['svtier1']
+#     output:
+#         vcf = temp('output/mapping/hg38/simulations/benchmarks/svtier1/{svtype}/all.vcf'),
+#         compressed = 'output/mapping/hg38/simulations/benchmarks/svtier1/{svtype}/all.vcf.gz',
+#         tbi = 'output/mapping/hg38/simulations/benchmarks/svtier1/{svtype}/all.vcf.gz.tbi'
+
+# use rule spike_in_ins as spike_in_del with:
+#     # Creates a vcf of the set of deletions from the simulation callset.
+#     output: 
+#         vcf = temp('output/mapping/hg38/simulations/spike_in/{spike_coverage}/del/all.vcf'),
+#         compressed = 'output/mapping/hg38/simulations/spike_in/{spike_coverage}/del/all.vcf.gz',
+#         tbi = 'output/mapping/hg38/simulations/spike_in/{spike_coverage}/del/all.vcf.gz.tbi'
+#     params:
+#         svtype = 'DEL'
+
+# use rule spike_in_ins as control_ins with:
+#     # Creates a vcf of the set of insertions from the germline (control) callset.
+#     input:
+#         vcf = 'output/mapping/hg38/sniffles/standard/single_sample/HG002.vcf.gz'
+#     output: 
+#         vcf = temp('output/mapping/hg38/simulations/control/HG002/ins/all.vcf'),
+#         compressed = 'output/mapping/hg38/simulations/control/HG002/ins/all.vcf.gz',
+#         tbi = 'output/mapping/hg38/simulations/control/HG002/ins/all.vcf.gz.tbi'
+
+# use rule spike_in_ins as control_del with:
+#     # Creates a vcf of the set of deletions from the germline (control) callset.
+#     input:
+#         vcf = 'output/mapping/hg38/sniffles/standard/single_sample/HG002.vcf.gz'
+#     output: 
+#         vcf = temp('output/mapping/hg38/simulations/control/HG002/del/all.vcf'),
+#         compressed = 'output/mapping/hg38/simulations/control/HG002/del/all.vcf.gz',
+#         tbi = 'output/mapping/hg38/simulations/control/HG002/del/all.vcf.gz.tbi'
+#     params:
+#         svtype = 'DEL'
+
+# use rule spike_in_ins as benchmark_ins:
+#     # Creates a vcf of the set of deletions from the benchmark callset (below, hard-set to SV Tier 1).
+#     input:
+#         vcf = config['reference']['benchmarks']['svtier1']
+#     output:
+#         vcf = temp('output/mapping/hg38/simulations/benchmarks/svtier1/ins/all.vcf'),
+#         compressed = 'output/mapping/hg38/simulations/benchmarks/svtier1/ins/all.vcf.gz',
+#         tbi = 'output/mapping/hg38/simulations/benchmarks/svtier1/ins/all.vcf.gz.tbi'
+#     params:
+#         svtype = 'INS'
+
+# use rule spike_in_ins as benchmark_del:
+#     # Creates a vcf of the set of deletions from the benchmark callset (below, hard-set to SV Tier 1).
+#     input:
+#         vcf = config['reference']['benchmarks']['svtier1']
+#     output:
+#         vcf = temp('output/mapping/hg38/simulations/benchmarks/svtier1/del/all.vcf'),
+#         compressed = 'output/mapping/hg38/simulations/benchmarks/svtier1/del/all.vcf.gz',
+#         tbi = 'output/mapping/hg38/simulations/benchmarks/svtier1/del/all.vcf.gz.tbi'
+#     params:
+#         svtype = 'DEL'
+
+rule svlen_bins:
+    # Takes an vcf containing a set of given svtype and creates subset vcfs containing SVs within a given svlen span.
     input:
-        vcf = 'output/mapping/hg38/sniffles/standard/single_sample/HG002.vcf.gz'
-    output: 
-        vcf = temp('output/mapping/hg38/simulations/spike_in/germline_comp/HG002_germline_cutoff_ins.vcf'),
-        compressed = 'output/mapping/hg38/simulations/spike_in/germline_comp/HG002_germline_cutoff_ins.vcf.gz',
-        tbi = 'output/mapping/hg38/simulations/spike_in/germline_comp/HG002_germline_cutoff_ins.vcf.gz.tbi'
-
-use rule spike_in_subset_ins as germline_subset_del with:
-    # Takes the HG002 germline callset and applies the same svtype and svlen filters for benchmark comparison.
-    input:
-        vcf = 'output/mapping/hg38/sniffles/standard/single_sample/HG002.vcf.gz'
-    output: 
-        vcf = temp('output/mapping/hg38/simulations/spike_in/germline_comp/HG002_germline_cutoff_del.vcf'),
-        compressed = 'output/mapping/hg38/simulations/spike_in/germline_comp/HG002_germline_cutoff_del.vcf.gz',
-        tbi = 'output/mapping/hg38/simulations/spike_in/germline_comp/HG002_germline_cutoff_del.vcf.gz.tbi'
-    params:
-        svtype = 'DEL',
-        svlen = config['simulations']['svlen']
-
-rule spike_in_truvari_ins:
-    # Uses truvari to benchmark spike-in insertions against the appropriate filtered SV Tier 1 callset.
-    input: 
-        query='output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked_cutoff_ins.vcf.gz'
+        vcf = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/all.vcf.gz'
     output:
-        expand("output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari/simulation/ins/{outfiles}", allow_missing = True,
+        vcf = temp('output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/bins/{lower}_{upper}.vcf'),
+        compressed = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/bins/{lower}_{upper}.vcf.gz',
+        tbi = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/bins/{lower}_{upper}.vcf.gz.tbi'
+    conda: "../envs/truvari.yml"
+    threads: 1
+    params:
+        outdir = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/bins'
+    shell:
+        """
+        mkdir -p {params.outdir}
+        bcftools filter -i 'SVLEN >= {wildcards.lower} & SVLEN <= {wildcards.upper}' {input.vcf} -o {output.vcf}
+        bgzip -@ {threads} -c {output.vcf} > {output.compressed}
+        tabix {output.compressed}
+        """
+
+rule svlen_cumulative:
+    # Takes an vcf containing a set of given svtype and creates subsets by max size, such that sequential size cutoffs can be used to generate cumulative distributions.
+    input:
+        vcf = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/all.vcf.gz'
+    output:
+        vcf = temp('output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/cumulative/{upper}.vcf'),
+        compressed = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/cumulative/{upper}.vcf.gz',
+        tbi = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/cumulative/{upper}.vcf.gz.tbi'
+    conda: "../envs/truvari.yml"
+    threads: 1
+    params:
+        outdir = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/cumulative'
+    shell:
+        """
+        mkdir -p {params.outdir}
+        bcftools filter -i 'SVLEN <= {wildcards.upper}' {input.vcf} -o {output.vcf}
+        bgzip -@ {threads} -c {output.vcf} > {output.compressed}
+        tabix {output.compressed}
+        """
+
+rule truvari_all:
+    # Uses truvari to benchmark the given svtype subset against the matched svtype SV Tier 1 subset.
+    input: 
+        query = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/all.vcf.gz',
+        benchmark = 'output/mapping/hg38/simulations/benchmarks/svtier1/{svtype}/all.vcf.gz'
+    output:
+        expand("output/mapping/hg38/simulations/{group}/{subgroup}/truvari/{svtype}/all/{outfiles}", allow_missing = True,
                outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
     conda: "../envs/truvari.yml"
     threads: 5
     params:
-        category = 'simulation',
-        svtype = 'ins',
-        benchmark = config['reference']['benchmarks']['ins'],
-        outdir = "output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari"
+        outdir = "output/mapping/hg38/simulations/{group}/{subgroup}/truvari/{svtype}/all"
     shell:
-        """ 
-        mkdir -p {params.outdir}
-        truvari bench -b {params.benchmark} -c {input.query} -o {params.outdir}/{params.category}/{params.svtype} --passonly
+        """
+        # a temp fix for snakemake's behavior of preemptively creating output directories, which truvari does not like at all
+        # removing the preemptive outdir frees up the path for truvari to direct outfiles
+        rm -r {params.outdir}
+
+        truvari bench -b {input.benchmark} -c {input.query} -o {params.outdir} --passonly
         """
 
-use rule spike_in_truvari_ins as spike_in_truvari_del with:
-    # Uses truvari to benchmark spike-in deletions against the appropriate filtered SV Tier 1 callset.
+use rule truvari_all as truvari_svlen_bins with:
+    # Uses truvari to benchmark the given svtype + svlen binned subset against the matched svtype SV Tier 1 subset.
     input: 
-        query='output/mapping/hg38/simulations/spike_in/{spike_coverage}/spiked_cutoff_del.vcf.gz'
+        query = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/bins/{lower}_{upper}.vcf.gz',
+        benchmark = 'output/mapping/hg38/simulations/benchmarks/svtier1/{svtype}/bins/{lower}_{upper}.vcf.gz'
     output:
-        expand("output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari/simulation/del/{outfiles}", allow_missing = True,
+        expand("output/mapping/hg38/simulations/{group}/{subgroup}/truvari/{svtype}/bins/{lower}_{upper}/{outfiles}", allow_missing = True,
                outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
     params:
-        category = 'simulation',
-        svtype = 'del',
-        benchmark = config['reference']['benchmarks']['del'],
-        outdir = "output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari"
+        outdir = "output/mapping/hg38/simulations/{group}/{subgroup}/truvari/{svtype}/bins/{lower}_{upper}"
 
-use rule spike_in_truvari_ins as germline_truvari_ins with:
-    # Uses truvari to benchmark germline insertions against the appropriate filtered SV Tier 1 callset.
+use rule truvari_all as truvari_svlen_cumulative with:
+    # Uses truvari to benchmark the given svtype + svlen cumulative subset against the matched svtype SV Tier 1 subset.
     input: 
-        query='output/mapping/hg38/simulations/spike_in/HG002_germline_cutoff_ins.vcf.gz'
+        query = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}/cumulative/{upper}.vcf.gz',
+        benchmark = 'output/mapping/hg38/simulations/benchmarks/svtier1/{svtype}/cumulative/{upper}.vcf.gz'
     output:
-        expand("output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari/germline/ins/{outfiles}", allow_missing = True,
+        expand("output/mapping/hg38/simulations/{group}/{subgroup}/truvari/{svtype}/cumulative/{upper}/{outfiles}", allow_missing = True,
                outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
     params:
-        category = 'germline',
-        svtype = 'ins',
-        benchmark = config['reference']['benchmarks']['ins'],
-        outdir = "output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari"
+        outdir = "output/mapping/hg38/simulations/{group}/{subgroup}/truvari/{svtype}/cumulative/{upper}"
 
-use rule spike_in_truvari_ins as germline_truvari_del with:
-    # Uses truvari to benchmark germline deletions against the appropriate filtered SV Tier 1 callset.
-    input: 
-        query='output/mapping/hg38/simulations/spike_in/HG002_germline_cutoff_del.vcf.gz'
-    output:
-        expand("output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari/germline/del/{outfiles}", allow_missing = True,
-               outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
-    params:
-        category = 'germline',
-        svtype = 'del',
-        benchmark = config['reference']['benchmarks']['del'],
-        outdir = "output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari"
+# snakemake -pj40 --use-conda --conda-frontend mamba output/mapping/hg38/simulations/spike_in/1X/truvari/INS/cumulative/100/summary.json
 
-# snakemake -pj40 --use-conda --conda-frontend mamba output/mapping/hg38/simulations/spike_in/1X/truvari/simulation/del/summary.json output/mapping/hg38/simulations/spike_in/3X/truvari/simulation/del/summary.json output/mapping/hg38/simulations/spike_in/5X/truvari/simulation/del/summary.json output/mapping/hg38/simulations/spike_in/10X/truvari/simulation/del/summary.json -np
+# use rule spike_in_truvari_ins as spike_in_truvari_del with:
+#     # Uses truvari to benchmark all spike-in deletions against the appropriate filtered SV Tier 1 callset.
+#     input: 
+#         query='output/mapping/hg38/simulations/spike_in/{spike_coverage}/del/all.vcf.gz'
+#     output:
+#         expand("output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari/simulation/del/all/{outfiles}", allow_missing = True,
+#                outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
+#     params:
+#         category = 'simulation',
+#         svtype = 'del',
+#         set = 'all',
+#         benchmark = config['reference']['benchmarks']['del'],
+#         outdir = "output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari"
+
+# rule control_truvari_all:
+#     # Uses truvari to benchmark the given svtype subset (control, germline) against the matched svtype SV Tier 1 subset.
+#     input: 
+#         query = 'output/mapping/hg38/simulations/spike_in/HG002/{svtype}/all.vcf'
+#     output:
+#         expand("output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari/germline/{svtype}/all/{outfiles}", allow_missing = True,
+#                outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
+#     conda: "../envs/truvari.yml"
+#     threads: 5
+#     params:
+#         category = 'germline',
+#         set = 'all',
+#         benchmark = config['reference']['benchmarks']['{svtype}'],
+#         outdir = "output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari"
+#     shell:
+#         """ 
+#         mkdir -p {params.outdir}
+#         truvari bench -b {params.benchmark} -c {input.query} -o {params.outdir}/{params.category}/{wildcards.svtype}/{params.set} --passonly
+#         """
+
+# use rule spike_in_truvari_ins as control_truvari_del with:
+#     # Uses truvari to benchmark all germline deletions against the appropriate filtered SV Tier 1 callset.
+#     input: 
+#         query='output/mapping/hg38/simulations/spike_in/HG002_germline_cutoff_del.vcf.gz'
+#     output:
+#         expand("output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari/germline/del/{outfiles}", allow_missing = True,
+#                outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
+#     params:
+#         category = 'germline',
+#         svtype = 'del',
+#         set = 'all',
+#         benchmark = config['reference']['benchmarks']['del'],
+#         outdir = "output/mapping/hg38/simulations/spike_in/{spike_coverage}/truvari"
+
+
+# pressure testing: dry runs and DAGs
+# snakemake -pj40 --use-conda --conda-frontend mamba -np --dag output/mapping/hg38/simulations/control/HG002/truvari/ins/bins/1000_2000/summary.json | dot -Tpng > test_dag.png
+# snakemake -pj40 --use-conda --conda-frontend mamba -np --dag output/mapping/hg38/simulations/spike_in/1X/truvari/ins/bins/1000_2000/summary.json | dot -Tpng > test_dag.png
+# snakemake -pj40 --use-conda --conda-frontend mamba -np --dag output/mapping/hg38/simulations/spike_in/1X/truvari/ins/cumulative/10000/summary.json | dot -Tpng > test_dag.png
