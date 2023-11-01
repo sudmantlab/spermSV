@@ -8,7 +8,6 @@ code/
 # output folders
 output/
 logs/
-config/
 
 # rule/DAG graphs generated while testing stuff
 *.png

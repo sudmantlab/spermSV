@@ -1,0 +1,5 @@
+NAME	SAMPLE	TYPE	DATA	VERSION	PARAMS	COMMENT
+sniffles_mosaic	HG002_894_simulation	sniffles2	/global/scratch/users/stacy-l/spermSV/output/mapping/CHM13/sniffles/mosaic/single_sample/HG002_894_simulation.vcf.gz			
+sniffles_germline	HG002	sniffles2	/global/scratch/users/stacy-l/spermSV/output/mapping/CHM13/sniffles/standard/single_sample/HG002.vcf.gz			
+giab_CMRG	HG002	vcf	/global/scratch/users/stacy-l/spermSV/benchmarks/HG002/liftovervcf/HG002_CHM13_CMRG_SV_v1.00.vcf.gz			
+giab_SVTier1	HG002	vcf	/global/scratch/users/stacy-l/spermSV/benchmarks/HG002/liftovervcf/HG002_CHM13_SVs_Tier1_v0.6_withChr.vcf.gz			

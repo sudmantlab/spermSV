@@ -1,0 +1,16 @@
+{
+    "reference": "/global/scratch/users/stacy-l/references/T2T_CHM13/hs1.fa",
+    "ucsc_ref_name": "hs1",
+    "samplelist": {
+        "HPRC": ["HG002"],
+        "simulation": ["HG002_894_simulation"]
+    },
+    "merge_def": {
+        "szro-80": "nr::szro(0.8,,4):match(0.8)",
+        "snv-exact": "nrsnv::exact",
+        "ro-80-nm": "nr::ro(0.8)",
+        "szro-match80": "nr::szro:match(0.8)",
+        "ro-match80": "nr::ro:match(0.8)",
+        "szro-default": "nr::szro"
+    }
+}

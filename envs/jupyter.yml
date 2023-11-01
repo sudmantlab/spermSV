@@ -15,4 +15,5 @@ dependencies:
   - seaborn
   - plotly
   - tabulate
+  - snakemake
 # prefix: /global/scratch/users/stacy-l/miniconda3/envs/jupyter

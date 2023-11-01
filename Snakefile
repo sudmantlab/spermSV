@@ -26,10 +26,9 @@ include: "rules/simulations.smk"
 # Annotation
 include: "rules/repeatmasker.smk"
 
-# only looking at the cumulative values with different coverage rn because expanding bin wildcards is annoying, and the binned results might not even be that interesting
 rule all:
     input:
-        expand('output/mapping/hg38/simulations/spike_in/{coverage}/truvari/{svtype}/cumulative/{upper}/summary.json', coverage = ['1X', '2X', '3X', '4X', '5X'], svtype = ['INS', 'DEL'], upper = [100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000]),
-        expand('output/mapping/hg38/simulations/spike_in/1X/truvari/INS/bins/{lower}_{upper}/summary.json', zip, lower = [100, 250, 500, 750, 1000, 2500, 5000, 7500], upper = [250, 500, 750, 1000, 2500, 500, 7500, 10000]),
-        expand('output/mapping/hg38/simulations/spike_in/1X/truvari/DEL/bins/{lower}_{upper}/summary.json', zip, lower = [100, 250, 500, 750, 1000, 2500, 5000, 7500], upper = [250, 500, 750, 1000, 2500, 500, 7500, 10000]),
-        
+        expand('output/mapping/hg38/simulations/spike_in/{coverage}/truvari/{svtype}/cumulative/{upper}/summary.json', coverage = ['1X', '2X', '3X', '4X', '5X', '7X', '10X'], svtype = ['INS', 'DEL'], upper = [100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000]),
+        expand(expand('output/mapping/hg38/simulations/spike_in/{{coverage}}/truvari/{{svtype}}/bins/{lower}_{upper}/summary.json', zip, lower = [100, 250, 500, 750, 1000, 2500, 5000, 7500], upper = [250, 500, 750, 1000, 2500, 5000, 7500, 10000]), svtype = ['INS', 'DEL'], coverage = ['1X', '2X', '3X', '4X', '5X', '7X', '10X']),
+        expand('output/mapping/hg38/simulations/control/HG002/truvari/{svtype}/cumulative/{upper}/summary.json', svtype = ['INS', 'DEL'], upper = [100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000]),
+        expand(expand('output/mapping/hg38/simulations/control/HG002/truvari/{{svtype}}/bins/{lower}_{upper}/summary.json', zip, lower = [100, 250, 500, 750, 1000, 2500, 5000, 7500], upper = [250, 500, 750, 1000, 2500, 5000, 7500, 10000]), svtype = ['INS', 'DEL']),
