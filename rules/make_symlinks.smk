@@ -2,7 +2,6 @@
 # specified in downstream Snakemake rules. This preserves the structure for analysis AND allows for Globus
 # file transfer sync without requiring manual transfers to/from either directory.
 
-# Helper functions exist in rules/common.smk to symlink either bam or fastq: default should be bam.
 # ***Don't do both***, the HiFiAdapterFilt script doesn't like how that plays with the existing file/directory
 # structure, and it'll just assume you want *everything* ending in .bam, .fastq, .fastq.gz, etc. processed.
 # The filtering step will thus take 2-4X as long.

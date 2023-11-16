@@ -1,0 +1,7 @@
+name: pbsim3
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - pbsim3
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/pbsim3

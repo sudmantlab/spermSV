@@ -9,7 +9,7 @@ rule sniffles_standard:
     conda:
         '../envs/sniffles.yml'
     threads:
-        20
+        10
     resources:
         mem_mb=60000
     params:
@@ -46,7 +46,7 @@ rule sniffles_mosaic:
     conda:
         '../envs/sniffles.yml'
     threads:
-        20
+        10
     resources:
         mem_mb=60000
     params:
@@ -55,6 +55,7 @@ rule sniffles_mosaic:
         minsupport = config['sniffles']['minsupport'],
         mapq = config['sniffles']['mapq'],
         mosaic_af_min = config['sniffles']['mosaic-af-min'],
+        mosaic_af_max = config['sniffles']['mosaic-af-max'],
         mosaic_qc_strand = config['sniffles']['mosaic-qc-strand']
     log:
         "logs/mapping/{refalias}/sniffles/mosaic/single_sample/{specimen}.log"
@@ -72,64 +73,26 @@ rule sniffles_mosaic:
         --mapq {params.mapq} \
         --output-rnames \
         --mosaic-af-min {params.mosaic_af_min} \
+        --mosaic-af-max {params.mosaic_af_max} \
         --mosaic-qc-strand={params.mosaic_qc_strand} &> {log}
         """
 
-rule sniffles_mosaic_no_qc:
-    # Calls mosaic (somatic) SVs using the --mosaic option, without performing *any* QC filters (--no-qc option).
-    input:
-        bam = "output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam",
-        index = "output/mapping/{refalias}/winnowmap/standard/{specimen}.sorted.merged.bam.bai"
-    output:
-        vcf='output/mapping/{refalias}/sniffles/mosaic/single_sample/{specimen}_no_qc.vcf.gz',
-        snf='output/mapping/{refalias}/sniffles/mosaic/single_sample/{specimen}_no_qc.snf',
-        tbi='output/mapping/{refalias}/sniffles/mosaic/single_sample/{specimen}_no_qc.vcf.gz.tbi'
-    conda:
-        '../envs/sniffles.yml'
+rule alt_to_fasta:
+    # Writes INS alleles to a fasta file for RepeatMasker. 
+    input: 
+        vcf='output/mapping/{refalias}/sniffles/{setting}/single_sample/{specimen}.vcf.gz'
+    output: 
+        fa = 'output/mapping/{refalias}/sniffles/{setting}/single_sample/{specimen}.alt.fa'
     threads:
-        20
-    resources:
-        mem_mb=60000
-    params:
-        refgenome = config['reference']['fasta'],
-        repeats = config['reference']['annotations']['repeats'],
-        mapq = config['sniffles']['mapq'],
-    log:
-        "logs/mapping/{refalias}/sniffles/mosaic/single_sample/{specimen}_no_qc.log"
-    benchmark:
-        "logs/mapping/{refalias}/sniffles/mosaic/single_sample/{specimen}_no_qc.bench.log"
-    shell:
-        """
-        sniffles --input {input.bam} --vcf {output.vcf} --snf {output.snf} \
-        --reference {params.refgenome} --tandem-repeats {params.repeats} \
-        --threads {threads} --mosaic \
-        --mapq {params.mapq} \
-        --output-rnames \
-        --no-qc &> {log}
-        """
-
-# rule filter_sniffles:
-#     # Filters the output vcf ahead of repeatmasker identification step.
-#     input: 
-#         vcf='output/mapping/{refalias}/sniffles/{setting}/single_sample/{specimen}.vcf.gz'
-#     output: 
-#         filtered= temp('output/mapping/{refalias}/sniffles/{setting}/single_sample/{specimen}.unheadered.filtered.vcf'),
-#         fa = 'output/mapping/{refalias}/sniffles/{setting}/single_sample/{specimen}.filtered.fa'
-#     threads:
-#         10
-#     run:
-#         filter_vcf(input.vcf, output.filtered)
-
-# rule reheader_sniffles:
-#     # For some strange reason, the shell command to reheader won't work inside filter_single_vcf. :(
-#     input:
-#         unfiltered = 'output/mapping/{refalias}/sniffles/{setting}/single_sample/{specimen}.vcf.gz',
-#         filtered = 'output/mapping/{refalias}/sniffles/{setting}/single_sample/{specimen}.unheadered.filtered.vcf'
-#     output:
-#         'output/mapping/{refalias}/sniffles/{setting}/single_sample/{specimen}.filtered.vcf'
-#     threads:
-#         10
-#     shell:
-#         """
-#         "zcat {input.unfiltered} | head -72 - | cat - {input.filtered} > {output}"
-#         """
+        10
+    run:
+        def write_fasta(vcf, outfile):
+            # Takes the alt output of Sniffles2 and writes a fasta file for input through RepeatMasker.
+            table = vcf[['ID', 'ALT']]
+            with open(outfile, 'w') as f:
+                for header, seq in table.to_records(index=False):
+                    f.write(f'>{header}\n{seq}\n')
+        
+        vcf = pd.read_table(input.vcf, skiprows = 241) # skip vcf header
+        print("Writing ALT sequences to ", output.fa)
+        write_fasta(vcf, output.fa)

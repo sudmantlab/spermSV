@@ -20,8 +20,7 @@ rule uBAMtoFastq:
     input:
         "data/PacBio-HiFi/{specimen}/{lane}/{smrtcell}.ccs.bam"
     output:
-        # set this to temp once we know it works
-        "output/preprocessing/uBAMtoFastq/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz"
+        temp("output/preprocessing/uBAMtoFastq/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz")
     conda: "../envs/preprocessing.yml"
     threads: 10
     shell:

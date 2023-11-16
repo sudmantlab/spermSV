@@ -23,6 +23,8 @@ paths:
   trgt:
     repo: "/global/scratch/users/stacy-l/spermSV/code/trgt"
     catalog: "/global/scratch/users/stacy-l/spermSV/code/trgt/repeats/repeat_catalog.hg38.bed"
+  sim-it:
+    repo: "/global/scratch/users/stacy-l/spermSV/code/Sim-it"
   
 ###############################
 ### Analysis config options ###
@@ -39,11 +41,16 @@ reference:
     repeats: "/global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_simpleRepeat.bed"
     segdups: "/global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_genomicSuperDups.bed"
     censat: "/global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_centromeres.bed"
+    cpg: "/global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_cpgIslandExt.bed"
+    plof: "/global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_gnomAD_geneLoF.bed"
+    microsat: "/global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_microsat.bed"
+    repeatmasker: "/global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_repeatmasker.bed"
+    refseq: "/global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_ncbiRefSeq.gtf.gz"
   benchmarks:
     svtier1: 
       all: "/global/scratch/users/stacy-l/spermSV/benchmarks/HG002/liftovervcf/hg38/HG002_hg38_SVs_Tier1_v0.6_withChr.vcf.gz"
-      ins: "/global/scratch/users/stacy-l/spermSV/benchmarks/HG002/liftovervcf/hg38/HG002_hg38_SVs_Tier1_v0.6_withChr_ins.vcf.gz"
-      del: "/global/scratch/users/stacy-l/spermSV/benchmarks/HG002/liftovervcf/hg38/HG002_hg38_SVs_Tier1_v0.6_withChr_del.vcf.gz"
+    cmrg:
+      all: "/global/scratch/users/stacy-l/spermSV/benchmarks/HG002/HG002_GRCh38_CMRG_SV_v1.00.vcf.gz"
 
 minimap2:
   readgroup: "@RG\\tID:{specimen}\\tSM:{specimen}\\tPL:PACBIO"
@@ -63,6 +70,7 @@ sniffles:
   minsupport: 1
   mapq: 20
   mosaic-af-min: 0
+  mosaic-af-max: 0.2
   mosaic-qc-strand: False
 
 
@@ -71,10 +79,20 @@ sniffles:
 # It's not a GREAT solution, but it's okay.
 # Once refcoverage is established, fractional subsampling can be automated via the simulations.smk code.
 simulations:
-  control: 
-    sample: 'HG002'
-    coverage: 37
-  svlen: 10000
+  spike:
+    control: 
+      sample: 'HG002'
+      coverage: 37
+    svlen: 10000
+  survivor:
+    refgenome: '/global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa'
+    error_profile:
+      minreadlen: 10000
+      fraction: 0.15
+    snp_fraction: 0
+    coverage: 20
+  simit:
+    reference: '/global/scratch/users/stacy-l/references/hg38_ucsc/hg38.analysisSet.chroms/chr1.fa'
 
 repeatmasker:
   species: "human"

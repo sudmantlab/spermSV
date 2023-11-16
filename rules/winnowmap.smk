@@ -22,7 +22,7 @@ rule winnowmap:
     output:
         temp("output/mapping/{refalias}/winnowmap/standard/{specimen}/{lane}/{smrtcell}.filt.bam")
     conda: "../envs/winnowmap.yml"
-    threads: 40
+    threads: 10
     params:
         refgenome = config['reference']['fasta'],
         readgroup = config['winnowmap']['readgroup'],

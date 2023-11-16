@@ -20,10 +20,9 @@ paths:
   HiFiAdapterFilt: 
     repo: "/global/scratch/users/stacy-l/spermSV/code/HiFiAdapterFilt"
     db: "/global/scratch/users/stacy-l/spermSV/code/HiFiAdapterFilt/DB"
-  # trgt:
-  #   repo: "/global/scratch/users/stacy-l/spermSV/code/trgt"
-  #   catalog: "/global/scratch/users/stacy-l/spermSV/code/trgt/repeats/repeat_catalog.hg38.bed"
-  
+  sim-it:
+    repo: "/global/scratch/users/stacy-l/spermSV/code/Sim-it"
+
 ###############################
 ### Analysis config options ###
 ###############################
@@ -58,6 +57,7 @@ sniffles:
   minsupport: 1
   mapq: 20
   mosaic-af-min: 0
+  mosaic-af-max: 0.2
   mosaic-qc-strand: False
 
 repeatmasker:
