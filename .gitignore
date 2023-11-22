@@ -5,10 +5,12 @@ globus_data/
 # software/code folders, some of these are git versioned
 code/
 
-# output & analysis folders
+# large output files + logs should be kept on savio
 output/
-analysis/
 logs/
+
+# exclude old_notebooks from analysis folder
+analysis/**/old_notebooks
 
 # rule/DAG graphs generated while testing stuff
 *.png

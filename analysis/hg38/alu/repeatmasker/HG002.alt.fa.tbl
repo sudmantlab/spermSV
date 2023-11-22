@@ -1,0 +1,50 @@
+==================================================
+file name: HG002.alt.fa             
+sequences:          8824
+total length:     854848 bp  (854848 bp excl N/X-runs)
+GC level:         43.62 %
+bases masked:     593939 bp ( 69.48 %)
+==================================================
+               number of      length   percentage
+               elements*    occupied  of sequence
+--------------------------------------------------
+SINEs:              239        35586 bp    4.16 %
+      ALUs          232        34775 bp    4.07 %
+      MIRs            7          811 bp    0.09 %
+
+LINEs:               82        18656 bp    2.18 %
+      LINE1          76        17718 bp    2.07 %
+      LINE2           6          938 bp    0.11 %
+      L3/CR1          0            0 bp    0.00 %
+
+LTR elements:        72        18584 bp    2.17 %
+      ERVL           15         2200 bp    0.26 %
+      ERVL-MaLRs     24         3217 bp    0.38 %
+      ERV_classI     27         8239 bp    0.96 %
+      ERV_classII     5         4695 bp    0.55 %
+
+DNA elements:        18         2365 bp    0.28 %
+     hAT-Charlie      9         1654 bp    0.19 %
+     TcMar-Tigger     7          567 bp    0.07 %
+
+Unclassified:        45         7535 bp    0.88 %
+
+Total interspersed repeats:    82726 bp    9.68 %
+
+
+Small RNA:            2          228 bp    0.03 %
+
+Satellites:         735       396692 bp   46.40 %
+Simple repeats:     861       106245 bp   12.43 %
+Low complexity:      57         8048 bp    0.94 %
+==================================================
+
+* most repeats fragmented by insertions or deletions
+  have been counted as one element
+                                                      
+
+The query species was assumed to be human         
+RepeatMasker version 4.1.2-p1 , default mode
+                                     
+run with rmblastn version 2.14.1+
+FamDB: CONS-Dfam_3.3

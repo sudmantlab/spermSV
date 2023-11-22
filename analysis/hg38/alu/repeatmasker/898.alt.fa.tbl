@@ -1,0 +1,50 @@
+==================================================
+file name: 898.alt.fa               
+sequences:          9126
+total length:     801672 bp  (801672 bp excl N/X-runs)
+GC level:         42.03 %
+bases masked:     564715 bp ( 70.44 %)
+==================================================
+               number of      length   percentage
+               elements*    occupied  of sequence
+--------------------------------------------------
+SINEs:              255        35633 bp    4.44 %
+      ALUs          245        34624 bp    4.32 %
+      MIRs           10         1009 bp    0.13 %
+
+LINEs:              122        39585 bp    4.94 %
+      LINE1         110        37790 bp    4.71 %
+      LINE2          10         1436 bp    0.18 %
+      L3/CR1          1          179 bp    0.02 %
+
+LTR elements:        66        16433 bp    2.05 %
+      ERVL           11         1573 bp    0.20 %
+      ERVL-MaLRs     23         3086 bp    0.38 %
+      ERV_classI     30        11658 bp    1.45 %
+      ERV_classII     2          116 bp    0.01 %
+
+DNA elements:        19         2352 bp    0.29 %
+     hAT-Charlie      9         1152 bp    0.14 %
+     TcMar-Tigger     8         1050 bp    0.13 %
+
+Unclassified:        43         5382 bp    0.67 %
+
+Total interspersed repeats:    99385 bp   12.40 %
+
+
+Small RNA:            4          483 bp    0.06 %
+
+Satellites:         571       341360 bp   42.58 %
+Simple repeats:     854       117969 bp   14.72 %
+Low complexity:      44         5518 bp    0.69 %
+==================================================
+
+* most repeats fragmented by insertions or deletions
+  have been counted as one element
+                                                      
+
+The query species was assumed to be human         
+RepeatMasker version 4.1.2-p1 , default mode
+                                     
+run with rmblastn version 2.14.1+
+FamDB: CONS-Dfam_3.3

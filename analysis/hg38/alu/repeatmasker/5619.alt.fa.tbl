@@ -1,0 +1,50 @@
+==================================================
+file name: 5619.alt.fa              
+sequences:          9345
+total length:     756065 bp  (756065 bp excl N/X-runs)
+GC level:         42.23 %
+bases masked:     484880 bp ( 64.13 %)
+==================================================
+               number of      length   percentage
+               elements*    occupied  of sequence
+--------------------------------------------------
+SINEs:              244        28512 bp    3.77 %
+      ALUs          238        28038 bp    3.71 %
+      MIRs            6          474 bp    0.06 %
+
+LINEs:              131        36915 bp    4.88 %
+      LINE1         123        35799 bp    4.73 %
+      LINE2           8         1116 bp    0.15 %
+      L3/CR1          0            0 bp    0.00 %
+
+LTR elements:        62        12538 bp    1.66 %
+      ERVL            8         1299 bp    0.17 %
+      ERVL-MaLRs     25         3101 bp    0.41 %
+      ERV_classI     25         3259 bp    0.43 %
+      ERV_classII     4         4879 bp    0.65 %
+
+DNA elements:        24         2602 bp    0.34 %
+     hAT-Charlie      7          801 bp    0.11 %
+     TcMar-Tigger    11         1285 bp    0.17 %
+
+Unclassified:        62         8035 bp    1.06 %
+
+Total interspersed repeats:    88602 bp   11.72 %
+
+
+Small RNA:            4          738 bp    0.10 %
+
+Satellites:         489       263750 bp   34.88 %
+Simple repeats:     875       124721 bp   16.50 %
+Low complexity:      58         7069 bp    0.93 %
+==================================================
+
+* most repeats fragmented by insertions or deletions
+  have been counted as one element
+                                                      
+
+The query species was assumed to be human         
+RepeatMasker version 4.1.2-p1 , default mode
+                                     
+run with rmblastn version 2.14.1+
+FamDB: CONS-Dfam_3.3
