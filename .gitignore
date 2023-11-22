@@ -2,11 +2,12 @@
 data/
 globus_data/
 
-# software/code folders
+# software/code folders, some of these are git versioned
 code/
 
-# output folders
+# output & analysis folders
 output/
+analysis/
 logs/
 
 # rule/DAG graphs generated while testing stuff
@@ -15,10 +16,6 @@ logs/
 
 # benchmarks are large and need to be backed up using a different method
 benchmarks/
-
-# notebooks can be backed up for reference, but files internal to the folder are likely deprecated and don't need to be versioned
-notebooks/jupyter/*/*
-!notebooks/jupyter/*/*.ipynb
 
 # caches
 .*
