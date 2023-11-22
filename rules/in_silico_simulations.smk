@@ -95,6 +95,8 @@ rule survivor_simreads:
         """
 
 rule merge_survivor_svsimreads:
+    # This rule triggers parallel generation of simulated reads by SURVIVOR w/ the survivor_simreads rule.
+    # Note that target coverage is set in the configfile.
     input:
         expand('output/mapping/hg38/simulations/in_silico/SURVIVOR/{sim_id}/{sim_id}.temp_{n_sim}.fasta', allow_missing = True, 
                 n_sim = np.arange(0, config['simulations']['survivor']['coverage']))
