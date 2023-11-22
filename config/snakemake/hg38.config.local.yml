@@ -1,0 +1,105 @@
+#############################
+### Project configuration ###
+#############################
+
+# Indicate working directory and metadata (sample) table
+# data is expected in the data/ folder relative to the working directory
+# need to write an "expected inputs/structure" doc for data/
+
+workdir: "/Users/stacyli/sudmant/spermSV"
+sample_table: "/Users/stacyli/sudmant/spermSV/config/snakemake/samples.tsv"
+
+##########################
+### Path configuration ###
+##########################
+
+# Specify paths to scripts, packages, and other tools not managed by conda
+# Working on helper functions for managing environmental $PATH as necessary.
+
+paths:
+  HiFiAdapterFilt: 
+    repo: "/Users/stacyli/sudmant/spermSV/code/HiFiAdapterFilt"
+    db: "/Users/stacyli/sudmant/spermSV/code/HiFiAdapterFilt/DB"
+  trgt:
+    repo: "/Users/stacyli/sudmant/spermSV/code/trgt"
+    catalog: "/Users/stacyli/sudmant/spermSV/code/trgt/repeats/repeat_catalog.hg38.bed"
+  sim-it:
+    repo: "/Users/stacyli/sudmant/spermSV/code/Sim-it"
+  
+###############################
+### Analysis config options ###
+###############################
+
+# Indicate reference genome + annotation files (.bed, .gff, etc)
+# The alias will be used for organizing mapping outputs:
+# for example, output/mapping/CHM13 or output/mapping/hg38_no_alts
+
+reference:
+  fasta: "/Users/stacyli/sudmant/references/hg38_HGSVC/hg38.no_alt.fa.gz"
+  alias: "hg38"
+  annotations:
+    repeats: "/Users/stacyli/sudmant/references/hg38_HGSVC/GRCh38_simpleRepeat.bed"
+    segdups: "/Users/stacyli/sudmant/references/hg38_HGSVC/GRCh38_genomicSuperDups.bed"
+    censat: "/Users/stacyli/sudmant/references/hg38_HGSVC/GRCh38_centromeres.bed"
+    cpg: "/Users/stacyli/sudmant/references/hg38_HGSVC/GRCh38_cpgIslandExt.bed"
+    plof: "/Users/stacyli/sudmant/references/hg38_HGSVC/GRCh38_gnomAD_geneLoF.bed"
+    microsat: "/Users/stacyli/sudmant/references/hg38_HGSVC/GRCh38_microsat.bed"
+    repeatmasker: "/Users/stacyli/sudmant/references/hg38_HGSVC/GRCh38_repeatmasker.bed"
+    refseq: "/Users/stacyli/sudmant/references/hg38_HGSVC/GRCh38_ncbiRefSeq.gtf.gz"
+  benchmarks:
+    svtier1: 
+      all: "/Users/stacyli/sudmant/spermSV/benchmarks/HG002/liftovervcf/hg38/HG002_hg38_SVs_Tier1_v0.6_withChr.vcf.gz"
+    cmrg:
+      all: "/Users/stacyli/sudmant/spermSV/benchmarks/HG002/HG002_GRCh38_CMRG_SV_v1.00.vcf.gz"
+
+minimap2:
+  readgroup: "@RG\\tID:{specimen}\\tSM:{specimen}\\tPL:PACBIO"
+
+winnowmap:
+  readgroup: "'@RG\\tID:{specimen}\\tSM:{specimen}\\tPL:PACBIO'"
+
+meryl:
+  k: 15
+  distinct: 0.9998
+
+samtools:
+  minQ: 10
+  readgroup: "'@RG\\tID:{specimen}\\tSM:{specimen}\\tPL:PACBIO'"
+
+sniffles:
+  minsupport: 1
+  mapq: 20
+  mosaic-af-min: 0
+  mosaic-af-max: 0.2
+  mosaic-qc-strand: False
+
+
+# The current HG002 coverage with hg38 + winnowmap (below, "refcoverage") is ~37X.
+# Obviously, the coverage number can only be filled in here to parameterize simulations *after* mapping is complete.
+# It's not a GREAT solution, but it's okay.
+# Once refcoverage is established, fractional subsampling can be automated via the simulations.smk code.
+simulations:
+  spike:
+    control: 
+      sample: 'HG002'
+      coverage: 37
+    svlen: 10000
+  survivor:
+    refgenome: '/Users/stacyli/sudmant/references/hg38_HGSVC/hg38.no_alt.fa'
+    error_profile:
+      minreadlen: 10000
+      fraction: 0.15
+    snp_fraction: 0
+    coverage: 20
+  simit:
+    reference: '/Users/stacyli/sudmant/references/hg38_ucsc/hg38.analysisSet.chroms/chr1.fa'
+
+repeatmasker:
+  species: "human"
+  engine: "rmblast"
+
+pepper_etc:
+  mapQ: 10
+
+singularity:
+  mount_dir: "/Users/stacyli/sudmant"
