@@ -58,6 +58,9 @@ minimap2:
 winnowmap:
   readgroup: "'@RG\\tID:{specimen}\\tSM:{specimen}\\tPL:PACBIO'"
 
+duplomap:
+  db: "/global/scratch/users/stacy-l/spermSV/config/packages/duplomap/hg38"
+
 meryl:
   k: 15
   distinct: 0.9998

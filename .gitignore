@@ -4,6 +4,7 @@ globus_data/
 
 # software/code folders, some of these are git versioned
 code/
+config/packages/duplomap
 
 # output & analysis folders
 output/
