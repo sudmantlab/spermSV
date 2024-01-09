@@ -7,24 +7,15 @@ class SnifflesVCF(pd.DataFrame):
 
     def create(self, vcf_path, header_len = 241):
         # Takes in a sniffles (mosaic) vcf (.vcf.gz) and parses it into a pandas df.
-        # Requires a dictionary of records relating sample ID and smrtcell IDs.
-        # Example: (pd.DataFrame(...).to_dict(orient = 'records'))
+        # The header length will vary based on the reference genome and other operations applied to the vcf.
+        # 241 is the default value for the hg38 (no alts) reference genome + default sniffles mosaic output.
 
-        # order = ['#CHROM', 'start', 'end', 'SVTYPE', 'SVLEN', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'ORIGIN', 'RNAMES', 'GT', 'GQ', 'DR', 'DV']
-        vcf = pd.read_table(vcf_path, skiprows = header_len) # 241 default value is for hg38 no alts x sniffles, will vary on the reference
-
-        # # Creates a separate RNAMES field and makes them more readable (substitutes flow cell IDs for sample ID)
+        vcf = pd.read_table(vcf_path, skiprows = header_len)
         vcf['RNAMES'] = vcf['INFO'].str.extract("(?<=RNAMES=)(.+)(?=;C)")
-        # for rec in records:
-        #     vcf['RNAMES'] = vcf['RNAMES'].str.replace(rec['smrtcell'], rec['specimen'])
 
         # Adds additional columns for filtering downstream
-        # vcf['ORIGIN'] = vcf['RNAMES'].str.extract("(\\w+)(?=\\/)")
         vcf['SVTYPE'] = vcf['INFO'].str.extract("(?<=SVTYPE=)(\\w+)(?=;)")
-        vcf['SVLEN'] = vcf['INFO'].str.extract("(?<=SVLEN=)(.+)(?=;END)").astype('float')
-        # vcf = pd.concat([vcf.drop(columns=['SAMPLE', 'FORMAT']), vcf['SAMPLE'].str.split(':', expand = True).rename(columns={0: 'GT', 1: 'GQ', 2: 'DR', 3: 'DV'})], axis = 1) # expand-replaces SAMPLE and FORMAT fields
-        # for val in ['DR', 'DV']:
-        #     vcf[val] = vcf[val].astype('int')
+        vcf['SVLEN'] = vcf['INFO'].str.extract("(?<=SVLEN=)(.+)(?=;END)")
 
         self.__dict__.update(vcf.__dict__)
         return self
@@ -41,27 +32,28 @@ class AnnotatedGFF(pd.DataFrame):
         self.read_filter = None 
     
     def create(self, vcf_path, gff_path, header_len = 241):
-        # Instantiates an annotated RepeatMasker GFF with additional variant info from the origin VCF file.
-        # Returns a dataframe of the annotated GFF output. 
+        # Creates a variant table based on the VCF standard, annotated with information from RepeatMasker (GFF).
+        # Returns a DataFrame-like table.
 
         # load VCF, extract info values to independent columns for downstream parsing
         vcf = pd.read_table(vcf_path, skiprows = header_len) # 241 default value is for hg38 no alts x sniffles, will vary on the reference
-        vcf['SVLEN'] = vcf['INFO'].str.extract("(?<=SVLEN=)(.+)(?=;END)").astype('float')
         vcf['RNAMES'] = vcf['INFO'].str.extract("(?<=RNAMES=)(.+)(?=;C)")
-        vcf[['ref_reads', 'alt_reads']] = vcf['SAMPLE'].str.split(':', expand = True)[[2,3]].astype(int)
+        vcf['SVLEN'] = vcf['INFO'].str.extract("(?<=SVLEN=)(.+)(?=;END)")
         
-        # read in base repeatmasker GFF, extract attribute values to independent columns for downstream parsing
+        # read in base repeatmasker GFF, extract attribute values to independent columns for 1downstream parsing
         merged = pd.read_table(gff_path, skiprows = 3, header = None)
 
         # from gff format spec
         # modified colnames to make values clear relative to repeatmasker
         # attribute contains motif name + start/end of the match in the consensus seq
-        merged.columns = ['ID', 'source', 'feature', 'query_start', 'query_end', 'perc_divergence', 'strand', 'frame', 'attribute']
+        merged.columns = ['ID', 'source', 'feature', 'motif_start', 'motif_end', 'divergence', 'strand', 'frame', 'attribute']
         merged['motif'] = merged['attribute'].str.extract('(?<=\\:)(.*)(?=\")')
-        merged['match_len'] = merged['query_end'] - merged['query_start'] # gives total length matching motif consensus, distinct from VCF's variant length
-        merged = merged.merge(vcf[['SVLEN', '#CHROM', 'POS', 'ID', 'REF', 'ALT', 'ref_reads', 'alt_reads', 'RNAMES']], on = 'ID')
-        merged['query_start'] = merged['POS'] + merged['query_start']
-        merged['query_end'] = merged['POS'] + merged['query_end']
+        merged['match_len'] = merged['motif_end'] - merged['motif_start'] # gives total length matching motif consensus, distinct from VCF's variant length
+        merged = merged[['ID', 'motif', 'motif_start', 'motif_end', 'divergence', 'strand']]
+        merged = merged.merge(vcf, on = 'ID')
+        merged['motif_start'] = merged['POS'] + merged['motif_start']
+        merged['motif_end'] = merged['POS'] + merged['motif_end']
+        merged[['ref_reads', 'alt_reads']] = merged['SAMPLE'].str.split(':', expand = True)[[2,3]].astype(int)
 
         self.__dict__.update(merged.__dict__)
         self.origin_vcf = vcf_path
@@ -101,20 +93,32 @@ def export_rnames(df, filepath):
     print(f'Saving .txt file to {filepath} ...')
     flat_rnames.to_csv(filepath, index = False, header = None)
 
+def write_fasta(vcf, outfile):
+    # Takes the ALT sequences and writes to a fasta file.
+    table = vcf[['ID', 'ALT']]
+    with open(outfile, 'w') as f:
+        for header, seq in table.to_records(index=False):
+            f.write(f'>{header}\n{seq}\n')
+
 def as_gff3(df, save = False, filepath = None):
     # Creates a GFF3 formatted version containing the sniffles variant ID in the attribute field.
     # This can be used as a key to merge with other annotated tables.
-    # By default, returns a copy of the GFF3 for inspection.
+
     gff3 = df.copy()
     gff3.rename(columns = {'#CHROM': 'seqname', 'POS': 'start'}, inplace = True)
     gff3['source'] = 'sniffles_mosaic'
     gff3['feature'] = 'variation'
-    gff3['start'] = gff3['start'].astype('int')
-    gff3['end'] = gff3['INFO'].str.extract("(?<=END=)(\\w+)(?=;)").astype('int')
+    gff3['start'] = gff3['start'].astype('int') # ensure int type for gff3 compatibility
+    gff3['end'] = gff3['INFO'].str.extract("(?<=END=)(\\w+)(?=;)")
     gff3['score'] = '.'
-    gff3['strand'] =  gff3['INFO'].str.extract("(?<=STRAND=)(\\w+)(?=;)")
+    gff3['strand'] =  gff3['INFO'].str.extract("(?<=STRAND=)(.)(?=;)").fillna('.')
     gff3['frame'] = '.'
-    gff3['attribute'] = gff3['ID'] # copy over sniffles ID to be used for merging
+    gff3['attribute'] = gff3['ID']
+    
+    # fix BND (translocation) values with NaN for end by assigning end = start 
+    bnd_index = gff3.index[gff3['end'].isna()]
+    gff3.loc[bnd_index, 'end'] = gff3.loc[bnd_index, 'start']
+
     gff3 = gff3[['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attribute']]
 
     if save:

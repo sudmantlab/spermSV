@@ -1,7 +1,8 @@
-rule filter_mosaic_calls:
-    # Reheaders and filters a VCF from sniffles mosaic.
-    # 1) Changes the SAMPLE field to a {specimen} named field.
-    # 2) Excludes variants with extreme coverage or read support values.
+rule preprocess_variants:
+    # Takes in the VCF output of sniffles mosaic and preprocesses with the following steps:
+    # 1) Prepends the ID field with the sample name (ex. Sniffles2.BND.F38S0 -> 894_Sniffles2.BND.F38S0).
+    # 2) Filters out variants with extreme coverage or read support values.
+    # The ID value passed on to downstream analyses will retain the sample origin.
     input:
         vcf = 'output/alignment/{refalias}/{mapper}/{setting}/variants/sniffles_mosaic/{specimen}.vcf.gz'
     output:
@@ -9,20 +10,19 @@ rule filter_mosaic_calls:
         index = 'output/alignment/{refalias}/{mapper}/{setting}/variants/sniffles_mosaic/{specimen}.filt.vcf.gz.csi'
     conda:
         "../envs/process_variants.yml"
-    threads: 1
     params:
         max_cov = 80,
         min_cov = 40,
         max_freq = 0.1
     shell:
         """
-        echo {wildcards.specimen} | bcftools reheader --threads {threads} -s - {input.vcf} |
-        bcftools filter --threads {threads} \
+        bcftools annotate --set-id '{wildcards.specimen}\_%ID' {input.vcf} | \
+        bcftools filter - \
         -i '{params.max_cov} > (DR + DV) & (DR + DV) > {params.min_cov} & (DV <= {params.max_freq} * (DR + DV))' \
-        - -o {output.filt} --write-index
+        -o {output.filt} --write-index
         """
 
-rule join_mosaic_calls:
+rule join_filtered_calls:
     # Joins together filtered calls from all available filtered VCFs.
     input:
         expand('output/alignment/{refalias}/{mapper}/{setting}/variants/sniffles_mosaic/{specimen}.filt.vcf.gz',
@@ -35,7 +35,7 @@ rule join_mosaic_calls:
     threads: 5
     shell:
         """
-        bcftools merge --threads {threads} {input} -o {output.vcf} --write-index
+        bcftools concat --threads {threads} -a {input} -o {output.vcf} --write-index
         """
 
 rule count_repetitive:
@@ -94,7 +94,7 @@ rule svcf_to_gff:
 
 rule annotate_features:
     # Annotates a file with information on curated or putative features overlapped in the below bedfiles.
-    # Requires strandedness match 
+    # Requires strandedness match.
     input:
         "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.gff"
     output:
@@ -110,16 +110,53 @@ rule annotate_features:
         > {output}
         """
 
+rule write_alt_fasta:
+    # Takes a (sniffles) vcf and writes INS alleles to a fasta file for RepeatMasker. 
+    input: 
+        vcf= "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.vcf.gz"
+    output: 
+        fa = 'analysis/{refalias}/denovo/files/{mapper}/{setting}/repeatmasker/all.filt.alt.fa'
+    wildcard_constraints:
+        specimen = '[A-Za-z0-9]+'
+    threads: 2
+    script:
+        "../scripts/python/svcf_alt_to_fasta.py"
+        
+rule analyze_alt_fasta:
+    # Takes a fasta file containing ALT allele sequences from Sniffles2 output, then analyzes the sequences using RepeatMasker.
+    # Relevant outputs: a .tbl (difficult to parse) and a .gff (easier to parse) denoting identified repeat motifs.
+    input:
+        "analysis/{refalias}/{analysis}/files/{mapper}/{setting}/repeatmasker/{specimen}.filt.alt.fa"
+    output:
+        expand("analysis/{refalias}/{analysis}/files/{mapper}/{setting}/repeatmasker/{specimen}.filt.alt.fa.{suffix}", 
+        allow_missing = True, suffix = ['tbl', 'out.gff', 'masked', 'cat'])
+    wildcard_constraints:
+        specimen = '[A-Za-z0-9]+'
+    params:
+        outdir = "analysis/{refalias}/{analysis}/files/{mapper}/{setting}/repeatmasker",
+        species = config['repeatmasker']['species'],
+        engine = config['repeatmasker']['engine']
+    log:
+        "logs/analysis/{refalias}/{analysis}/files/{mapper}/{setting}/repeatmasker/{specimen}.filt.log"
+    threads: 10
+    conda:
+        '../envs/RepeatMasker.yml'
+    shell:
+        """
+        RepeatMasker -pa {threads} -engine {params.engine} -nocut -gff \
+        -species {params.species} -dir {params.outdir} {input} &> {log}
+        """
+
 rule annotate_AluY:
     # Annotates a file with information on RepeatMasker-identified insertions, then subsets to AluY* motif insertions.
     input:
         vcf = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.vcf.gz",
         gff = "analysis/{refalias}/denovo/files/{mapper}/{setting}/repeatmasker/all.filt.alt.fa.out.gff"
     output:
-        h5 = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/subset.annotate_AluY.h5"
+        tsv = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.annotate_AluY.tsv"
     conda:
         "../envs/process_variants.yml"
-    threads: 8
+    threads: 2
     script:
         "../scripts/python/annotate_AluY.py"
 

@@ -109,18 +109,23 @@ rule symlink_control:
         """
 
 rule symlink_svtier1:
-    # Creates symlinks for svtier1 benchmark.
+    # Creates symlink for svtier1 benchmark + a corresponding tabix index.
     input:
         vcf = config['reference']['benchmarks']['svtier1']['all'],
     output:
-        link = 'output/mapping/hg38/simulations/benchmarks/svtier1/all.vcf.gz',
+        vcf = 'output/mapping/hg38/simulations/benchmarks/svtier1/all.vcf.gz',
+        tbi = 'output/mapping/hg38/simulations/benchmarks/svtier1/all.vcf.gz.tbi',
+    conda: 
+        '../envs/truvari.yml'
     shell:
         """
-        ln -s {input.vcf} {output.link}
+        ln -s {input.vcf} {output.vcf}
+        tabix {output.vcf}
         """
 
 use rule symlink_svtier1 as symlink_cmrg with:
     input:
         vcf = config['reference']['benchmarks']['cmrg']['all'],
     output:
-        link = 'output/mapping/hg38/simulations/benchmarks/cmrg/all.vcf.gz',
+        vcf = 'output/mapping/hg38/simulations/benchmarks/cmrg/all.vcf.gz',
+        tbi = 'output/mapping/hg38/simulations/benchmarks/cmrg/all.vcf.gz.tbi',

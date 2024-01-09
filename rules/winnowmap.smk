@@ -2,11 +2,11 @@ rule meryl_kmer:
     input:
         refgenome = config['reference']['fasta']
     output:
-        meryl_kmer = f"output/mapping/{{refalias}}/winnowmap/standard/meryl/repetitive_k{config['meryl']['k']}_{{refalias}}.txt"
+        meryl_kmer = f"output/alignment/{{refalias}}/winnowmap/standard/mapped/meryl/repetitive_k{config['meryl']['k']}_{{refalias}}.txt"
     conda: "../envs/winnowmap.yml"
     threads: 20
     params:
-        DB = "output/mapping/{refalias}/winnowmap/standard/meryl/merylDB",
+        DB = "output/alignment/{{refalias}}/winnowmap/standard/mapped/meryl/merylDB",
         k = config['meryl']['k'],
         distinct = config['meryl']['distinct'],
     shell:
@@ -17,10 +17,10 @@ rule meryl_kmer:
 
 rule winnowmap:
     input: 
-        meryl_kmer = f"output/mapping/{{refalias}}/winnowmap/standard/meryl/repetitive_k{config['meryl']['k']}_{{refalias}}.txt",
+        meryl_kmer = f"output/alignment/{{refalias}}/winnowmap/standard/mapped/meryl/repetitive_k{config['meryl']['k']}_{{refalias}}.txt",
         hifi = "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.fastq.gz"
     output:
-        temp("output/mapping/{refalias}/winnowmap/standard/{specimen}/{lane}/{smrtcell}.filt.bam")
+        temp("output/alignment/{refalias}/winnowmap/standard/mapped/temp/{specimen}/{lane}/{smrtcell}.filt.bam")
     conda: "../envs/winnowmap.yml"
     threads: 10
     params:
