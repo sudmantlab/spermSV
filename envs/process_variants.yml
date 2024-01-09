@@ -1,0 +1,9 @@
+name: process_variants
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - bedtools==2.31.0
+  - bcftools==1.19
+  - samtools 
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/process_variants
