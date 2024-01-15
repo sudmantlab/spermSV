@@ -21,8 +21,8 @@ paths:
     repo: "/global/scratch/users/stacy-l/spermSV/code/HiFiAdapterFilt"
     db: "/global/scratch/users/stacy-l/spermSV/code/HiFiAdapterFilt/DB"
   trgt:
-    binary: "/global/scratch/users/stacy-l/spermSV/code/trgt/trgt-beta-binary"
-    catalog: "/global/scratch/users/stacy-l/spermSV/code/trgt/repeats/repeat_catalog.hg38.bed"
+    repeat_catalog: "/global/scratch/users/stacy-l/spermSV/code/trgt/repeats/repeat_catalog.hg38.bed"
+    pathogenic: "/global/scratch/users/stacy-l/spermSV/code/trgt/repeats/pathogenic_repeats.hg38.bed"
   sim-it:
     repo: "/global/scratch/users/stacy-l/spermSV/code/Sim-it"
   

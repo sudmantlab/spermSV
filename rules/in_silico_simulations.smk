@@ -66,7 +66,7 @@ rule survivor_simgenome:
     params:
         refgenome = config['simulations']['survivor']['refgenome'],
         snp_fraction = config['simulations']['survivor']['snp_fraction'],
-        outdir = 'output/mapping/hg38/simulations/in_silico/SURVIVOR'
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
     shell:
         """
         SURVIVOR simSV {params.refgenome} {input.params} {params.snp_fraction} 0 {params.outdir}/{wildcards.sim_id}/{wildcards.sim_id}
@@ -87,7 +87,7 @@ rule survivor_simreads:
         "../envs/sniffles.yml"
     threads: 1
     params:
-        outdir = 'output/mapping/hg38/simulations/in_silico/SURVIVOR'
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
     shell:
         """
         echo "Generating simulation reads, process {wildcards.n_sim}..."
@@ -122,10 +122,10 @@ rule sim_it_refreads:
         "../envs/Sim-it.yml"
     threads: 1
     params:
-        outdir = "output/mapping/hg38/simulations/in_silico/Sim-it"
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
     shell:
         """
-        perl code/Sim-it/Sim-it1.3.4.pl -c {input.config} -o {params.outdir}/ref_reads
+        perl code/Sim-it/Sim-it1.3.4.pl -c {input.config} -o {params.outdir}
         """
 
 rule sim_it_svsimreads:
@@ -145,8 +145,8 @@ rule sim_it_svsimreads:
         "../envs/Sim-it.yml"
     threads: 1
     params:
-        outdir = "output/mapping/hg38/simulations/in_silico/Sim-it"
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
     shell:
         """
-        perl code/Sim-it/Sim-it1.3.4.pl -c {input.config} -o {params.outdir}/{wildcards.sim_id}
+        perl code/Sim-it/Sim-it1.3.4.pl -c {input.config} -o {params.outdir}
         """

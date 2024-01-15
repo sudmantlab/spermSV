@@ -10,7 +10,7 @@ rule svtier1_svtype_set:
         '../envs/truvari.yml'
     threads: 1
     params:
-        outdir = 'output/mapping/hg38/simulations/{group}/{subgroup}/{svtype}'
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
     shell:
         """
         mkdir -p {params.outdir}
@@ -30,7 +30,7 @@ rule svtier1_svlen_ins_bins:
     conda: "../envs/truvari.yml"
     threads: 1
     params:
-        outdir = 'output/mapping/hg38/simulations/{group}/{subgroup}/INS/bins'
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
     shell:
         """
         mkdir -p {params.outdir}
@@ -50,7 +50,7 @@ rule svtier1_svlen_del_bins:
     conda: "../envs/truvari.yml"
     threads: 1
     params:
-        outdir = 'output/mapping/hg38/simulations/{group}/{subgroup}/DEL/bins'
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
     shell:
         """
         mkdir -p {params.outdir}
@@ -72,7 +72,7 @@ rule svtier1_svlen_ins_cumulative:
     conda: "../envs/truvari.yml"
     threads: 1
     params:
-        outdir = 'output/mapping/hg38/simulations/{group}/{subgroup}/INS/cumulative'
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
     shell:
         """
         mkdir -p {params.outdir}
@@ -94,7 +94,7 @@ rule svtier1_svlen_del_cumulative:
     conda: "../envs/truvari.yml"
     threads: 1
     params:
-        outdir = 'output/mapping/hg38/simulations/{group}/{subgroup}/DEL/cumulative'
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
     shell:
         """
         mkdir -p {params.outdir}
@@ -115,7 +115,7 @@ rule svtier1_truvari_all:
     conda: "../envs/truvari.yml"
     threads: 5
     params:
-        outdir = "output/mapping/hg38/simulations/{group}/{subgroup}/truvari/{benchmark_set}/{svtype}/all"
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
     shell:
         """
         # a temp fix for snakemake's behavior of preemptively creating output directories, which truvari does not like at all
@@ -135,7 +135,7 @@ use rule svtier1_truvari_all as svtier1_truvari_svlen_bins with:
         expand("output/mapping/hg38/simulations/{group}/{subgroup}/truvari/{benchmark_set}/{svtype}/bins/{lower}_{upper}/{outfiles}", allow_missing = True,
                outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
     params:
-        outdir = "output/mapping/hg38/simulations/{group}/{subgroup}/truvari/{benchmark_set}/{svtype}/bins/{lower}_{upper}"
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
 
 use rule svtier1_truvari_all as svtier1_truvari_svlen_cumulative with:
     # Uses truvari to benchmark the given svtype + svlen cumulative subset against the matched svtype subset.
@@ -147,4 +147,4 @@ use rule svtier1_truvari_all as svtier1_truvari_svlen_cumulative with:
         expand("output/mapping/hg38/simulations/{group}/{subgroup}/truvari/{benchmark_set}/{svtype}/cumulative/{upper}/{outfiles}", allow_missing = True,
                outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
     params:
-        outdir = "output/mapping/hg38/simulations/{group}/{subgroup}/truvari/{benchmark_set}/{svtype}/cumulative/{upper}"
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),

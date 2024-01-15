@@ -1,131 +1,144 @@
 import pandas as pd
+import numpy as np
 
-class SnifflesVCF(pd.DataFrame):
-    def __init__(self):
-        # inherit all methods and props from DataFrame
-        super().__init__()
-
-    def create(self, vcf_path, header_len = 241):
-        # Takes in a sniffles (mosaic) vcf (.vcf.gz) and parses it into a pandas df.
+class parse:
+    def sniffles_vcf(vcf_path, header_len = 241):
+        # Takes in a sniffles (mosaic) vcf (.vcf.gz) and parses it a DataFrame.
         # The header length will vary based on the reference genome and other operations applied to the vcf.
         # 241 is the default value for the hg38 (no alts) reference genome + default sniffles mosaic output.
-
         vcf = pd.read_table(vcf_path, skiprows = header_len)
-        vcf['RNAMES'] = vcf['INFO'].str.extract("(?<=RNAMES=)(.+)(?=;C)")
 
-        # Adds additional columns for filtering downstream
+        # Extracts specific fields to columns for downstream use
+        vcf['RNAMES'] = vcf['INFO'].str.extract("(?<=RNAMES=)(.+)(?=;C)")
         vcf['SVTYPE'] = vcf['INFO'].str.extract("(?<=SVTYPE=)(\\w+)(?=;)")
-        vcf['SVLEN'] = vcf['INFO'].str.extract("(?<=SVLEN=)(.+)(?=;END)")
-
-        self.__dict__.update(vcf.__dict__)
-        return self
-
-class AnnotatedGFF(pd.DataFrame):
-    def __init__(self):
-        # inherit all methods and props from DataFrame
-        super().__init__()
-
-        # specific attributes
-        self.origin_vcf = None
-        self.origin_gff = None
-        self.motif_filter = None
-        self.read_filter = None 
-    
-    def create(self, vcf_path, gff_path, header_len = 241):
-        # Creates a variant table based on the VCF standard, annotated with information from RepeatMasker (GFF).
-        # Returns a DataFrame-like table.
-
-        # load VCF, extract info values to independent columns for downstream parsing
-        vcf = pd.read_table(vcf_path, skiprows = header_len) # 241 default value is for hg38 no alts x sniffles, will vary on the reference
-        vcf['RNAMES'] = vcf['INFO'].str.extract("(?<=RNAMES=)(.+)(?=;C)")
-        vcf['SVLEN'] = vcf['INFO'].str.extract("(?<=SVLEN=)(.+)(?=;END)")
+        vcf['SVLEN'] = vcf['INFO'].str.extract("(?<=SVLEN=)(.+)(?=;END)").astype('int')
+        vcf[['ref_reads', 'alt_reads']] = vcf['SAMPLE'].str.split(':', expand = True)[[2,3]].astype(int)
+        vcf['origin'] = vcf['ID'].str.split('_', expand = True)[0]
         
-        # read in base repeatmasker GFF, extract attribute values to independent columns for 1downstream parsing
-        merged = pd.read_table(gff_path, skiprows = 3, header = None)
-
-        # from gff format spec
-        # modified colnames to make values clear relative to repeatmasker
-        # attribute contains motif name + start/end of the match in the consensus seq
-        merged.columns = ['ID', 'source', 'feature', 'motif_start', 'motif_end', 'divergence', 'strand', 'frame', 'attribute']
-        merged['motif'] = merged['attribute'].str.extract('(?<=\\:)(.*)(?=\")')
-        merged['match_len'] = merged['motif_end'] - merged['motif_start'] # gives total length matching motif consensus, distinct from VCF's variant length
-        merged = merged[['ID', 'motif', 'motif_start', 'motif_end', 'divergence', 'strand']]
-        merged = merged.merge(vcf, on = 'ID')
-        merged['motif_start'] = merged['POS'] + merged['motif_start']
-        merged['motif_end'] = merged['POS'] + merged['motif_end']
-        merged[['ref_reads', 'alt_reads']] = merged['SAMPLE'].str.split(':', expand = True)[[2,3]].astype(int)
-
-        self.__dict__.update(merged.__dict__)
-        self.origin_vcf = vcf_path
-        self.origin_gff = gff_path
-        return self
+        return vcf
     
-    def as_aGFF(self, df):
-        # Sets a copy of a DataFrame with the given class.
-        self.__dict__update(df.__dict__)
-        return self
-    
-### utility functions that can operate on aGFF or DataFrame
+    def repeatmasker(rm_path):
+        # Takes in a RepeatMasker fixed-width outfile and parses it into a DataFrame.
+        # RepeatMasker outfiles are not quite true fixed-width.
+        # The original outfile column names are relabeled for clarity.
 
-def filter_motif(df, motif, inplace = False):
-    # Filters the annotated table to only variants of a certain motif, using a simple substring regex match.
-    
-    if inplace:
-        df.motif_filter = motif
-        df = df[df['motif'].str.contains(motif)].reset_index(drop = True)
-    else:
-        return df[df['motif'].str.contains(motif)].reset_index(drop = True)     
+        out = pd.read_fwf(rm_path, header = 1)
+        out = out[['score', 'div.', 'del.', 'ins.', 'sequence', 'begin end', '(left)', 'repeat', 'class/family', 'begin  end', '(left).1']]
+        out[['query_start', 'query_end']] = out['begin end'].str.split(expand = True).astype(int)
 
-def filter_reads(df, ref_max, alt_max, inplace = False):
-    # Filters the annotated table by restricting to <= ref, <= alt read support.
-    if inplace:
-        df.read_filter = {"ref_max": ref_max, "alt_max": alt_max}
-        df = df.query(f"ref_reads <= {ref_max} & alt_reads <= {alt_max}")
-    else:
-        return df.query(f"ref_reads <= {ref_max} & alt_reads <= {alt_max}")
+        # the consensus sequence start/end/left coordinates are hard to parse cleanly
+        # TODO: consider a cleaner way to parse this, in the meantime leave as str
+        # if the start coordinates are encapsulated by (), it indicates a start position on the reverse complement of the consensus
+        # if the left coordinates are encapsulated by (), it indicates the remaining length of the consensus past the match
+        out[['consensus_start', 'consensus_end']] = out['begin  end'].str.split(expand = True)
+        out.rename(columns = {'score': 'SW_score', 'div.': 'divergence', 'del.': 'deleted', 'ins.': 'inserted', 
+                            'sequence': 'ID', '(left)': 'query_left', 'repeat': 'motif', 'class/family': 'family', 
+                            '(left).1': 'consensus_left'}, inplace = True)
+        
+        # gives total length of insertion sequence that matched consensus sequence
+        out['consensus_len'] = out['query_end'] - out['query_start']
 
-def export_rnames(df, filepath):
-    # Writes a .txt file containing QNAMES for each support read in the table.
-    # This file can be used in a call to samtools view with the -N flag to subset a BAM file containing only these reads.
+        return out[['ID', 'motif', 'family', 'SW_score', 'divergence', 'deleted', 'inserted', 'query_start', 'query_end', 'query_left',
+                    'consensus_start', 'consensus_end', 'consensus_len', 'consensus_left']]
 
-    flat_rnames = pd.Series([read for sublist in [x.split(',') for x in df['RNAMES'].to_list()] for read in sublist]).drop_duplicates()
+class annotate:
+    def repeatmasker(vcf_path, rm_path, header_len = 241, save = False, filepath = None):
+        # Reads a VCF and RepeatMasker outfile, merging the contents of the outfile with the VCF.
 
-    print(f'Saving .txt file to {filepath} ...')
-    flat_rnames.to_csv(filepath, index = False, header = None)
+        vcf = parse.sniffles_vcf(vcf_path, header_len)
+        rm = parse.repeatmasker(rm_path)
 
-def write_fasta(vcf, outfile):
-    # Takes the ALT sequences and writes to a fasta file.
-    table = vcf[['ID', 'ALT']]
-    with open(outfile, 'w') as f:
-        for header, seq in table.to_records(index=False):
-            f.write(f'>{header}\n{seq}\n')
+        merged = vcf.merge(rm, on = 'ID')
+        # position query start/end coords relative to variant POS
+        merged['query_start'] = merged['POS'] + merged['query_start']
+        merged['query_end'] = merged['POS'] + merged['query_end']
+        merged['match_len'] = np.abs(merged['query_end'] - merged['query_start'])
+        merged['match_len_svlen_perc'] = (merged['match_len']/merged['SVLEN'])*100
 
-def as_gff3(df, save = False, filepath = None):
-    # Creates a GFF3 formatted version containing the sniffles variant ID in the attribute field.
-    # This can be used as a key to merge with other annotated tables.
-
-    gff3 = df.copy()
-    gff3.rename(columns = {'#CHROM': 'seqname', 'POS': 'start'}, inplace = True)
-    gff3['source'] = 'sniffles_mosaic'
-    gff3['feature'] = 'variation'
-    gff3['start'] = gff3['start'].astype('int') # ensure int type for gff3 compatibility
-    gff3['end'] = gff3['INFO'].str.extract("(?<=END=)(\\w+)(?=;)")
-    gff3['score'] = '.'
-    gff3['strand'] =  gff3['INFO'].str.extract("(?<=STRAND=)(.)(?=;)").fillna('.')
-    gff3['frame'] = '.'
-    gff3['attribute'] = gff3['ID']
-    
-    # fix BND (translocation) values with NaN for end by assigning end = start 
-    bnd_index = gff3.index[gff3['end'].isna()]
-    gff3.loc[bnd_index, 'end'] = gff3.loc[bnd_index, 'start']
-
-    gff3 = gff3[['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attribute']]
-
-    if save:
-        if filepath == None:
-            raise SyntaxError("Please provide a file path to save the GFF3 file.")
+        if save:
+            write.table(merged, filepath)
         else:
-            print(f'Saving GFF3 to {filepath} ...')
-            gff3.to_csv(filepath, index = False, header = None, sep = '\t')
-    else:
-        return gff3
+            return merged
+    
+class transform:
+    def gff3(df, save = False, filepath = None):
+        # Creates a GFF3 formatted version containing the sniffles variant ID in the attribute field.
+        # This can be used as a key to merge with other annotated tables.
+        # Export using write.table() with a .gff suffix.
+
+        df.rename(columns = {'#CHROM': 'seqname', 'POS': 'start'}, inplace = True)
+        df['source'] = 'sniffles_mosaic'
+        df['feature'] = 'variation'
+        df['start'] = df['start'].astype('int') # ensure int type for df compatibility
+        df['end'] = df['INFO'].str.extract("(?<=END=)(\\w+)(?=;)")
+        df['score'] = '.'
+        df['strand'] =  df['INFO'].str.extract("(?<=STRAND=)(.)(?=;)").fillna('.')
+        df['frame'] = '.'
+        df['attribute'] = df['ID']
+        
+        # fix BND (translocation) values with NaN for end by assigning end = start 
+        bnd_index = df.index[df['end'].isna()]
+        df.loc[bnd_index, 'end'] = df.loc[bnd_index, 'start']
+
+        # subset to GFF3 standard columns
+        df = df[['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attribute']]
+
+        if save:
+            write.table(df, filepath)
+        else:
+            return df
+    
+class filter:
+    def motif(df, motif, inplace = False):
+        # Filters the annotated table to only variants of a certain motif, using a simple substring regex match.
+        
+        if inplace:
+            df.motif_filter = motif
+            df = df[df['motif'].str.contains(motif)].reset_index(drop = True)
+        else:
+            return df[df['motif'].str.contains(motif)].reset_index(drop = True)     
+
+    def reads(df, ref_max, alt_max, inplace = False):
+        # Filters the annotated table by restricting to <= ref, <= alt read support.
+        if inplace:
+            df.read_filter = {"ref_max": ref_max, "alt_max": alt_max}
+            df = df.query(f"ref_reads <= {ref_max} & alt_reads <= {alt_max}")
+        else:
+            return df.query(f"ref_reads <= {ref_max} & alt_reads <= {alt_max}")
+
+class write:
+    def rnames(df, origin, filepath):
+        # Writes a .txt file containing RNAMES for the given origin (specimen/sample.
+        # This file can be used in a call to samtools view with the -N flag to subset a BAM file containing only these reads.
+        # TODO: Assert .txt extension before publish time
+
+        # flattens a list of lists
+        rnames = [read for sublist in [x.split(',') for x in df.query(f"origin == {origin}")['RNAMES'].to_list()] for read in sublist]
+
+        print(f'Saving .txt file to {filepath} ...')
+        rnames.to_csv(filepath, index = False, header = None)
+
+    def alt_to_fasta(df, filepath):
+        # Takes the ALT sequences from a VCF file and writes to a fasta file.
+        # TODO: Assert .fa extension before publish time
+        table = df[['ID', 'ALT']]
+
+        print(f'Writing ALT sequences to {filepath} ...')
+        with open(filepath, 'w') as f:
+            for header, seq in table.to_records(index=False):
+                f.write(f'>{header}\n{seq}\n')
+    
+    def table(df, filepath):
+        # Wrapper for .to_csv with presets in mind for genomic table outputs.
+        if filepath == None:
+                raise SyntaxError("Please provide a file path.")
+        else:
+            print(f'Saving df to {filepath} ...')
+            if filepath.split('.')[-1] == 'tsv':
+                df.to_csv(filepath, index = False, header = None, sep = '\t')
+            elif filepath.split('.')[-1] == 'csv':
+                df.to_csv(filepath, index = False, header = None, sep = ',')
+            else:
+                # save tab delimited as default if other extension
+                # TODO: make less messy later
+                df.to_csv(filepath, index = False, header = None, sep = '\t')

@@ -3,7 +3,16 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
+  - python>=3.9
+  - pandas==2.1.4
+  - samtools
   - bedtools==2.31.0
   - bcftools==1.19
-  - samtools 
+  - pysam
+  - sniffles==2.2
+  - trgt==0.7.0
+  # required for trgt outside of conda mgmt
+  # cvbio depends on openjdk version pin
+  # - openjdk==11.0.15
+  # - cvbio
 prefix: /global/scratch/users/stacy-l/miniconda3/envs/process_variants

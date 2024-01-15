@@ -7,7 +7,8 @@ rule duplomap:
     params:
         refgenome = config['reference']['fasta'].strip('.gz'),
         db = config['duplomap']['db'],
-        outdir = "output/alignment/{refalias}/{mapper}/{setting}/duplomap"
+        # outdir = "output/alignment/{refalias}/{mapper}/{setting}/duplomap"
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
     conda:
         "../envs/mapping.yml"
     threads: 8

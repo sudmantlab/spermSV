@@ -18,7 +18,7 @@ rule svision:
     threads: 20
     conda: "../envs/svision.yml" 
     params:
-        outdir = "output/hg38_no_alts/svision",
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),,
         refgenome = "/global/scratch/users/stacy-l/references/hg38_ucsc/hg38.fa",
         script_path = "code/SVision/SVision",
         modeldir = "code/SVision/model"

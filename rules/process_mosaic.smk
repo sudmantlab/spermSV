@@ -2,6 +2,8 @@ rule preprocess_variants:
     # Takes in the VCF output of sniffles mosaic and preprocesses with the following steps:
     # 1) Prepends the ID field with the sample name (ex. Sniffles2.BND.F38S0 -> 894_Sniffles2.BND.F38S0).
     # 2) Filters out variants with extreme coverage or read support values.
+    # 3) Filters out variants on uncertain contigs (_random, chrUn_)
+    # 4) Filters out excessive SV lengths (greater than 10000)
     # The ID value passed on to downstream analyses will retain the sample origin.
     input:
         vcf = 'output/alignment/{refalias}/{mapper}/{setting}/variants/sniffles_mosaic/{specimen}.vcf.gz'
@@ -16,9 +18,10 @@ rule preprocess_variants:
         max_freq = 0.1
     shell:
         """
-        bcftools annotate --set-id '{wildcards.specimen}\_%ID' {input.vcf} | \
+        bcftools view -r chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrX,chrY {input.vcf} | \
+        bcftools annotate --set-id '{wildcards.specimen}\_%ID' - | \
         bcftools filter - \
-        -i '{params.max_cov} > (DR + DV) & (DR + DV) > {params.min_cov} & (DV <= {params.max_freq} * (DR + DV))' \
+        -i 'INFO/SVLEN <= 10000 & {params.max_cov} > (DR + DV) & (DR + DV) > {params.min_cov} & (DV <= {params.max_freq} * (DR + DV))' \
         -o {output.filt} --write-index
         """
 
@@ -85,7 +88,7 @@ rule svcf_to_gff:
     input:
         vcf = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.vcf.gz"
     output:
-        gff = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.gff"
+        gff = temp("analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.gff")
     conda:
         "../envs/process_variants.yml"
     threads: 8
@@ -112,8 +115,9 @@ rule annotate_features:
 
 rule write_alt_fasta:
     # Takes a (sniffles) vcf and writes INS alleles to a fasta file for RepeatMasker. 
-    input: 
-        vcf= "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.vcf.gz"
+    input:
+        parsing_utils = "scripts/python/parsing_utils.py",
+        vcf = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.vcf.gz"
     output: 
         fa = 'analysis/{refalias}/denovo/files/{mapper}/{setting}/repeatmasker/all.filt.alt.fa'
     wildcard_constraints:
@@ -133,7 +137,7 @@ rule analyze_alt_fasta:
     wildcard_constraints:
         specimen = '[A-Za-z0-9]+'
     params:
-        outdir = "analysis/{refalias}/{analysis}/files/{mapper}/{setting}/repeatmasker",
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
         species = config['repeatmasker']['species'],
         engine = config['repeatmasker']['engine']
     log:
@@ -147,49 +151,16 @@ rule analyze_alt_fasta:
         -species {params.species} -dir {params.outdir} {input} &> {log}
         """
 
-rule annotate_AluY:
-    # Annotates a file with information on RepeatMasker-identified insertions, then subsets to AluY* motif insertions.
+rule annotate_repeatmasker:
+    # Annotates a file with information on RepeatMasker-identified insertions.
     input:
+        parsing_utils = "scripts/python/parsing_utils.py",
         vcf = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.vcf.gz",
-        gff = "analysis/{refalias}/denovo/files/{mapper}/{setting}/repeatmasker/all.filt.alt.fa.out.gff"
+        out = "analysis/{refalias}/denovo/files/{mapper}/{setting}/repeatmasker/all.filt.alt.fa.out"
     output:
-        tsv = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.annotate_AluY.tsv"
+        tsv = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.annotate_repeatmasker.tsv"
     conda:
         "../envs/process_variants.yml"
     threads: 2
     script:
-        "../scripts/python/annotate_AluY.py"
-
-# use rule count_repetitive as count_repetitive_duplomap_minimap2 with:
-#     input:
-#         "analysis/{refalias}/alu/files/duplomap/minimap2/AluY_samples.gff"
-#     output:
-#         "analysis/{refalias}/alu/files/duplomap/minimap2/AluY_samples.count_repetitive.gff"
-
-# use rule annotate_repetitive as annotate_repetitive_duplomap_minimap2 with:
-#     input:
-#         "analysis/{refalias}/alu/files/duplomap/minimap2/AluY_samples.gff"
-#     output:
-#         "analysis/{refalias}/alu/files/duplomap/minimap2/AluY_samples.annotate_repetitive.gff"
-
-# use rule annotate_features as annotate_features_duplomap_minimap2 with:
-#     # Annotates a (reduced) GFF3 file with information on curated or putative features overlapped in the
-#     # below bedfiles.
-#     input:
-#         "analysis/{refalias}/alu/files/duplomap/minimap2/AluY_samples.gff"
-#     output:
-#         "analysis/{refalias}/alu/files/duplomap/minimap2/AluY_samples.annotate_features.gff"
-
-# rule annotate_AluY:
-#     # Takes the output VCF from sniffles mosaic and annotates with information from
-#     # the RepeatMasker GFF output, specifically information on AluY* elements.
-#     input:
-#         vcf = 'output/alignment/hg38/winnowmap/standard/variants/sniffles_mosaic/{specimen}.vcf.gz'
-#         gff = 'analysis/hg38/alu/files/winnowmap_standard/repeatmasker/{specimen}.alt.fa.out.gff'
-#     output:
-#     params:
-#         motif = 'AluY',
-#         mosaic_vcf = "",
-#         repeatmasker_gff = ""
-#     script:
-#         "scripts/annotate_alu.py"
+        "../scripts/python/annotate_repeatmasker.py"

@@ -11,7 +11,7 @@ rule cmrg_truvari_all:
     conda: "../envs/truvari.yml"
     threads: 5
     params:
-        outdir = "output/mapping/hg38/simulations/{group}/{subgroup}/truvari/cmrg/all"
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
     shell:
         """
         # a temp fix for snakemake's behavior of preemptively creating output directories, which truvari does not like at all

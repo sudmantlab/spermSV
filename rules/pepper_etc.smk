@@ -10,7 +10,7 @@ rule pepper_margin_deepvariant_hifi:
     params:
         mount_dir = config['singularity']['mount_dir'],
         refgenome = config['reference']['fasta'],
-        outdir = "output/mapping/{refalias}/pepper_etc",
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
         mapQ = config['pepper_etc']['mapQ']
     threads: 4
     conda:
@@ -26,6 +26,6 @@ rule pepper_margin_deepvariant_hifi:
         singularity exec --bind {params.mount_dir} \
         docker://kishwars/pepper_deepvariant:r0.8 \
         run_pepper_margin_deepvariant call_variant \
-        --hifi --phased_output -b {input.bam} -f {params.refgenome} -o {params.outdir}/{wildcards.specimen}/{wildcards.region} \
+        --hifi --phased_output -b {input.bam} -f {params.refgenome} -o {params.outdir} \
         --t {threads} -p {wildcards.specimen}.{wildcards.region} -s {wildcards.specimen} -r {wildcards.region} --pepper_min_mapq {params.mapQ} \
         """

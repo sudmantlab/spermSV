@@ -55,8 +55,8 @@ rule HiFiAdapterFilt:
     log: "logs/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.log"
     params:
         outDir = lambda wildcards, output: os.path.dirname(output[0]),
-        inDir = lambda wildcards, input: os.path.dirname(input[0]),
-        inPref = lambda wildcards, input: re.sub('(?<=ccs).*', '', os.path.basename(input[0])),        
+        inDir = lambda wildcards, output: os.path.dirname(input[0]),
+        inPref = lambda wildcards, output: re.sub('(?<=ccs).*', '', os.path.basename(input[0])),        
     conda: "../envs/preprocessing.yml"
     threads: 10
     shell: 

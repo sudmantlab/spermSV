@@ -50,7 +50,7 @@ rule panpan2ref:
         'asm/{ref}/{sample_hap}.srt.bam',
         'asm/{ref}/{sample_hap}.srt.rg.bam',
     params:
-        ref = lambda wildcards: ref_paths[wildcards.ref]
+        ref = lambda wildcards, output: ref_paths[wildcards.ref]
     shell: """
     minimap2 -a -x asm5 --cs -r2k -t 20 {params.ref} {input[0]} > {output[0]} &&  
     samtools sort -m4G -@4 -o {output[1]} {output[0]} &&
@@ -66,7 +66,7 @@ rule hprc2ref:
         'asm/{ref}/{human_sample}.srt.bam',
         'asm/{ref}/{human_sample}.srt.rg.bam',
     params:
-        ref = lambda wildcards: ref_paths[wildcards.ref]
+        ref = lambda wildcards, output: ref_paths[wildcards.ref]
     shell: """
     minimap2 -a -x asm5 --cs -r2k -t 20 {params.ref} {input[0]} > {output[0]} &&  
     samtools sort -m4G -@4 -o {output[1]} {output[0]} &&
@@ -80,8 +80,8 @@ rule asm2svs:
     output: 
         'svs/{ref}/{anything}/{anything}.vcf',
     params:
-        ref = lambda wildcards: ref_paths[wildcards.ref],
-        anything = lambda wildcards: wildcards.anything,
+        ref = lambda wildcards, output: ref_paths[wildcards.ref],
+        anything = lambda wildcards, output: wildcards.anything,
     shell: """
         svim-asm haploid 'svs/{wildcards.ref}/{wildcards.anything}' {input} {params.ref} &&
         mv 'svs/{wildcards.ref}/{wildcards.anything}/variants.vcf' 'svs/{wildcards.ref}/{wildcards.anything}/{wildcards.anything}.vcf' &&

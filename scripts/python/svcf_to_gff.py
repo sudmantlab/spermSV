@@ -1,5 +1,4 @@
-import parsing_utils as parse
-from parsing_utils import SnifflesVCF as sVCF
+from parsing_utils import *
 
-vcf= sVCF().create(snakemake.input['vcf'], header_len = 247)
-parse.as_gff3(vcf, save = True, filepath = snakemake.output['gff'])
+vcf = parse.sniffles_vcf(snakemake.input['vcf'], header_len = 249)
+transform.gff3(vcf, save = True, filepath = snakemake.output['gff'])

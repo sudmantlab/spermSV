@@ -7,10 +7,10 @@ rule svim:
         "output/hg38_no_alts/svim/{specimen}/variants.vcf"
         # not explicitly specifying timestamped logfile and debugging files
     params:
-        outdir = "output/hg38_no_alts/svim",
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
         refgenome = "/global/scratch/users/stacy-l/references/hg38_ucsc/hg38.fa",
     conda: "../envs/svim.yml"
     shell:
         """
-        svim alignment {params.outdir}/{wildcards.specimen} {input.bam} {params.refgenome} --verbose --sample {wildcards.specimen}
+        svim alignment {params.outdir} {input.bam} {params.refgenome} --verbose --sample {wildcards.specimen}
         """
