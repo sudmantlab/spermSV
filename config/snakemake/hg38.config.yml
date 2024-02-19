@@ -102,7 +102,7 @@ repeatmasker:
   species: "human"
   engine: "rmblast"
 
-pepper_etc:
+pmdv:
   mapQ: 10
 
 singularity:

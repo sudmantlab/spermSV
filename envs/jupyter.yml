@@ -6,14 +6,16 @@ channels:
 dependencies:
   # semi-arbitrary pins
   - python>=3.9
-  - biopython
   - numpy
   - pandas
   - matplotlib
-  - matplotlib-venn
   - jupyter
   - seaborn
   - plotly
-  - tabulate
   - snakemake
+  # things for quick analysis checks
+  - samtools
+  - pysam
+  - bedtools
+  - bcftools
 # prefix: /global/scratch/users/stacy-l/miniconda3/envs/jupyter

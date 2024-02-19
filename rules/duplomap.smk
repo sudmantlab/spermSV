@@ -1,6 +1,6 @@
 rule duplomap:
     input:
-        "output/alignment/{refalias}/{mapper}/{setting}/{specimen}.sorted.merged.bam"
+        "output/alignment/{refalias}/{mapper}/standard/{specimen}.sorted.merged.bam"
     output:
         "output/alignment/{refalias}/{mapper}/duplomap/mapped/{specimen}/realigned.bam",
         "output/alignment/{refalias}/{mapper}/duplomap/mapped/{specimen}/psvs.vcf.gz"

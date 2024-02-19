@@ -5,6 +5,7 @@ channels:
 dependencies:
   - python>=3.9
   - pandas==2.1.4
+  - pytables
   - samtools
   - bedtools==2.31.0
   - bcftools==1.19

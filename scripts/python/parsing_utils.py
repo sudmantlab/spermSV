@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import pysam
 
 class parse:
     def sniffles_vcf(vcf_path, header_len = 241):
@@ -41,6 +42,16 @@ class parse:
         return out[['ID', 'motif', 'family', 'SW_score', 'divergence', 'deleted', 'inserted', 'query_start', 'query_end', 'query_left',
                     'consensus_start', 'consensus_end', 'consensus_len', 'consensus_left']]
 
+    def samtags(bamfile, contig, position, interval = 500):
+        # Given an AlignmentFile from pysam, fetches reads within a given region and returns a 
+        # DataFrame of read tags for all reads within the given +/- interval (default 500 bp).
+        iter = bamfile.fetch(contig, position-interval, position+interval)
+        tags = dict()
+        for x in iter:
+            tags[x.query_name] = dict(x.tags)
+        return pd.DataFrame.from_dict(tags, orient = 'index')
+
+
 class annotate:
     def repeatmasker(vcf_path, rm_path, header_len = 241, save = False, filepath = None):
         # Reads a VCF and RepeatMasker outfile, merging the contents of the outfile with the VCF.
@@ -70,13 +81,13 @@ class transform:
         df['source'] = 'sniffles_mosaic'
         df['feature'] = 'variation'
         df['start'] = df['start'].astype('int') # ensure int type for df compatibility
-        df['end'] = df['INFO'].str.extract("(?<=END=)(\\w+)(?=;)")
+        df['end'] = np.maximum(df['start'], df['start'] + df['SVLEN'])
         df['score'] = '.'
         df['strand'] =  df['INFO'].str.extract("(?<=STRAND=)(.)(?=;)").fillna('.')
         df['frame'] = '.'
         df['attribute'] = df['ID']
         
-        # fix BND (translocation) values with NaN for end by assigning end = start 
+        # fix BND (translocation) values with NaN or lesser value for end by assigning end = start 
         bnd_index = df.index[df['end'].isna()]
         df.loc[bnd_index, 'end'] = df.loc[bnd_index, 'start']
 
@@ -84,36 +95,36 @@ class transform:
         df = df[['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attribute']]
 
         if save:
-            write.table(df, filepath)
+            df.to_csv(filepath, sep = '\t', index = False, header = False) # header breaks bedtools parsing
         else:
             return df
     
 class filter:
     def motif(df, motif, inplace = False):
-        # Filters the annotated table to only variants of a certain motif, using a simple substring regex match.
-        
-        if inplace:
-            df.motif_filter = motif
-            df = df[df['motif'].str.contains(motif)].reset_index(drop = True)
-        else:
-            return df[df['motif'].str.contains(motif)].reset_index(drop = True)     
+        # Wrapper to filter the annotated table to only variants of a certain motif.
+        return df[df['motif'].str.contains(motif)].reset_index(drop = True)
 
-    def reads(df, ref_max, alt_max, inplace = False):
-        # Filters the annotated table by restricting to <= ref, <= alt read support.
-        if inplace:
-            df.read_filter = {"ref_max": ref_max, "alt_max": alt_max}
-            df = df.query(f"ref_reads <= {ref_max} & alt_reads <= {alt_max}")
-        else:
-            return df.query(f"ref_reads <= {ref_max} & alt_reads <= {alt_max}")
+    def origin(df, origin, inplace = False):
+        # Wrapper to filter the annotated table to only variants from a specific specimen.
+        return df[df['origin'] == origin].reset_index(drop = True)
+        
+    def reads(df, ref_max = 0, alt_max = 0, inplace = False):
+        # Wrapper to filter the annotated table to only variants with less than hard-set ref/alt support.
+        # Defaults to 0 for both.
+        return df.query(f"ref_reads <= {ref_max} & alt_reads <= {alt_max}")
 
 class write:
-    def rnames(df, origin, filepath):
-        # Writes a .txt file containing RNAMES for the given origin (specimen/sample.
+    def rnames(df, filepath):
+        # Writes a .txt file containing RNAMES for the given table.
         # This file can be used in a call to samtools view with the -N flag to subset a BAM file containing only these reads.
         # TODO: Assert .txt extension before publish time
 
+        candidates = df[['ID', 'origin', 'RNAMES']]
+        candidates.loc[:, 'RNAMES'] = candidates['RNAMES'].str.split(',')
+        candidates = candidates.explode('RNAMES')
+
         # flattens a list of lists
-        rnames = [read for sublist in [x.split(',') for x in df.query(f"origin == {origin}")['RNAMES'].to_list()] for read in sublist]
+        rnames = [read for sublist in [x.split(',') for x in df['RNAMES'].to_list()] for read in sublist]
 
         print(f'Saving .txt file to {filepath} ...')
         rnames.to_csv(filepath, index = False, header = None)
@@ -128,17 +139,17 @@ class write:
             for header, seq in table.to_records(index=False):
                 f.write(f'>{header}\n{seq}\n')
     
-    def table(df, filepath):
+    def table(df, filepath, index = False):
         # Wrapper for .to_csv with presets in mind for genomic table outputs.
         if filepath == None:
                 raise SyntaxError("Please provide a file path.")
         else:
             print(f'Saving df to {filepath} ...')
             if filepath.split('.')[-1] == 'tsv':
-                df.to_csv(filepath, index = False, header = None, sep = '\t')
+                df.to_csv(filepath, index = index, sep = '\t')
             elif filepath.split('.')[-1] == 'csv':
-                df.to_csv(filepath, index = False, header = None, sep = ',')
+                df.to_csv(filepath, index = index, sep = ',')
             else:
                 # save tab delimited as default if other extension
                 # TODO: make less messy later
-                df.to_csv(filepath, index = False, header = None, sep = '\t')
+                df.to_csv(filepath, index = index, sep = '\t')

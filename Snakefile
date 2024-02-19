@@ -21,7 +21,7 @@ include: "rules/coverage_stats.smk"
 
 # Variant calling
 include: "rules/sniffles.smk"
-include: "rules/pepper_etc.smk"
+include: "rules/pmdv.smk"
 include: "rules/straglr.smk"
 include: "rules/trgt.smk"
 
@@ -37,10 +37,16 @@ include: "rules/process_mosaic.smk"
 rule all:
     input:
         # tandem repeat genotyping
-        expand('output/alignment/hg38/winnowmap/standard/variants/trgt/repeat_catalog/{specimen}.sorted.vcf.gz',  specimen = specimens),
-        expand('output/alignment/hg38/winnowmap/standard/variants/trgt/pathogenic/{specimen}.sorted.vcf.gz',  specimen = specimens),
+        # expand('output/alignment/hg38/winnowmap/standard/variants/trgt/repeat_catalog/{specimen}.sorted.vcf.gz',  specimen = specimens),
+        # expand('output/alignment/hg38/winnowmap/standard/variants/trgt/pathogenic/{specimen}.sorted.vcf.gz',  specimen = specimens),
         # alu analysis pipeline rebuild
-        expand("analysis/hg38/denovo/files/winnowmap/{setting}/variants/all.count_repetitive.gff", setting = ['standard', 'duplomap']),
-        expand("analysis/hg38/denovo/files/winnowmap/{setting}/variants/all.annotate_features.gff", setting = ['standard', 'duplomap']),
-        expand("analysis/hg38/denovo/files/winnowmap/{setting}/repeatmasker/all.filt.alt.fa", setting = ['standard', 'duplomap']),
-        expand("analysis/hg38/denovo/files/winnowmap/{setting}/variants/all.annotate_repeatmasker.tsv", setting = ['standard', 'duplomap']),
+        expand("analysis/hg38/denovo/files/{mapper}/{setting}/variants/all.filt.gff", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap']),
+        expand("analysis/hg38/denovo/files/{mapper}/{setting}/variants/all.overlap_repetitive.gff", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap']),
+        expand("analysis/hg38/denovo/files/{mapper}/{setting}/variants/all.annotate_{source}.gff", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap'], source = ['repeatMasker', 'simpleRepeat', 'genomicSuperDups', 'centromeres', 'microsat']),
+        expand("analysis/hg38/denovo/files/{mapper}/{setting}/variants/all.annotate_{database}.gff", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap'], database = ['gencode', 'refseq']),
+        expand("analysis/hg38/denovo/files/{mapper}/{setting}/repeatmasker/all.filt.alt.fa", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap']),
+        expand("analysis/hg38/denovo/files/{mapper}/{setting}/variants/all.annotate_repeatmasker.tsv", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap']),
+        # edit distance calcs
+        expand("analysis/hg38/denovo/files/{mapper}/{setting}/variants/{specimen}.annotate_edit_distance.tsv", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap'], specimen = specimens),
+        # pepper-margin-deepvariant calls; chrs is a list in common.smk
+        # expand("output/alignment/hg38/{mapper}/{setting}/variants/pmdv/{specimen}/{region}/{specimen}.{region}.vcf.gz", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap'], specimen = specimens, region = chrs)

@@ -41,13 +41,25 @@ rule join_filtered_calls:
         bcftools concat --threads {threads} -a {input} -o {output.vcf} --write-index
         """
 
-rule count_repetitive:
-    # Annotates a file with the overlap count and percentage overlap of repetitive or duplicated features 
+rule svcf_to_gff:
+    # Converts an existing Sniffles VCF to a GFF3 format.
+    input:
+        vcf = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.vcf.gz"
+    output:
+        gff = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.gff"
+    conda:
+        "../envs/process_variants.yml"
+    threads: 4
+    script:
+        "../scripts/python/svcf_to_gff.py"
+
+rule overlap_repetitive:
+    # Creates a file with the overlap count and percentage overlap of repetitive or duplicated features 
     # specified in the below bedfiles.
     input:
-        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.vcf.gz"
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.gff"
     output:
-        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.count_repetitive.gff"
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.overlap_repetitive.gff"
     conda:
         "../envs/process_variants.yml"
     threads: 8
@@ -62,56 +74,102 @@ rule count_repetitive:
         > {output}
         """
 
-rule annotate_repetitive:
-    # Annotates a file with information on repetitive features overlapped in the
-    # below bedfiles.
+rule annotate_genomicSuperDups_bedfile:
+    # Annotates a file with information on repetitive features overlapped in the bedfile.
     input:
-        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.vcf.gz"
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.gff"
     output:
-        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.annotate_repetitive.gff"
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.annotate_genomicSuperDups.gff"
     conda:
         "../envs/process_variants.yml"
-    threads: 8
+    params:
+        name = 'genomicSuperDups',
+        database = config['reference']['annotations']['segdups'],
+        stranded = '-s' # This is a dummy param that should be default on, only removed (set to "")
+        # for bedfiles that do not have strand information.
+    threads: 4
     shell:
         """
-        bedtools intersect -a {input} -wao -names repeatMasker simpleRepeat genomicSuperDups centromeres microsat \
-        -b /global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_repeatmasker.bed \
-        /global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_simpleRepeat.bed \
-        /global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_genomicSuperDups.bed \
-        /global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_centromeres.bed \
-        /global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_microsat.bed \
+        bedtools intersect -a {input} {params.stranded} -wao -names {params.name} \
+        -b {params.database} \
         > {output}
         """
 
-rule svcf_to_gff:
-    # Converts an existing Sniffles VCF to a GFF3 format.
+use rule annotate_genomicSuperDups_bedfile as annotate_repeatMasker_bedfile with:
+    # Annotates a file with information on repetitive features overlapped in the bedfile.
     input:
-        vcf = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.vcf.gz"
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.gff"
     output:
-        gff = temp("analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.gff")
-    conda:
-        "../envs/process_variants.yml"
-    threads: 8
-    script:
-        "../scripts/python/svcf_to_gff.py"
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.annotate_repeatMasker.gff"
+    params:
+        name = 'repeatMasker',
+        database = config['reference']['annotations']['repeatmasker'],
+        stranded = '-s' # This is a dummy param that should be default on, only removed (set to "")
+        # for bedfiles that do not have strand information.
 
-rule annotate_features:
-    # Annotates a file with information on curated or putative features overlapped in the below bedfiles.
+use rule annotate_genomicSuperDups_bedfile as annotate_simpleRepeat_bedfile with:
+    # Annotates a file with information on repetitive features overlapped in the bedfile.
+    input:
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.gff"
+    output:
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.annotate_simpleRepeat.gff"
+    params:
+        name = 'simpleRepeat',
+        database = config['reference']['annotations']['repeats'],
+        stranded = ''
+
+use rule annotate_genomicSuperDups_bedfile as annotate_centromeres_bedfile with:
+    # Annotates a file with information on repetitive features overlapped in the bedfile.
+    input:
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.gff"
+    output:
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.annotate_centromeres.gff"
+    params:
+        name = 'centromeres',
+        database = config['reference']['annotations']['censat'],
+        stranded = '-s' # This is a dummy param that should be default on, only removed (set to "")
+        # for bedfiles that do not have strand information.
+
+use rule annotate_genomicSuperDups_bedfile as annotate_microsat_bedfile with:
+    # Annotates a file with information on repetitive features overlapped in the bedfile.
+    input:
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.gff"
+    output:
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.annotate_microsat.gff"
+    params:
+        name = 'microsat',
+        database = config['reference']['annotations']['microsat'],
+        stranded = '-s' # This is a dummy param that should be default on, only removed (set to "")
+        # for bedfiles that do not have strand information.
+
+rule annotate_gencode_features:
+    # Annotates a file with information on curated or putative features overlapped in Gencode.
     # Requires strandedness match.
     input:
         "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.gff"
     output:
-        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.annotate_features.gff"
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.annotate_gencode.gff"
     conda:
         "../envs/process_variants.yml"
     threads: 8
+    params:
+        name = 'gencode_v44',
+        database = config['reference']['annotations']['gencode']
     shell:
         """
-        bedtools intersect -a {input} -wao -s -names refseq gencode_v44 \
-        -b /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.ncbiRefSeq.gtf.gz \
-        /global/scratch/users/stacy-l/references/hg38_HGSVC/gencode.v44.basic.annotation.gff3.gz \
+        bedtools intersect -a {input} -wao -s -names {params.name} \
+        -b {params.database} \
         > {output}
         """
+
+use rule annotate_gencode_features as annotate_refseq_features with:
+    # Annotates a file with information on curated or putative features overlapped in NCBI Refseq.
+    # Requires strandedness match.
+    output:
+        "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.annotate_refseq.gff"
+    params:
+        name = 'refseq',
+        database = config['reference']['annotations']['refseq']
 
 rule write_alt_fasta:
     # Takes a (sniffles) vcf and writes INS alleles to a fasta file for RepeatMasker. 
@@ -122,6 +180,8 @@ rule write_alt_fasta:
         fa = 'analysis/{refalias}/denovo/files/{mapper}/{setting}/repeatmasker/all.filt.alt.fa'
     wildcard_constraints:
         specimen = '[A-Za-z0-9]+'
+    conda:
+        "../envs/process_variants.yml"
     threads: 2
     script:
         "../scripts/python/svcf_alt_to_fasta.py"
@@ -133,7 +193,7 @@ rule analyze_alt_fasta:
         "analysis/{refalias}/{analysis}/files/{mapper}/{setting}/repeatmasker/{specimen}.filt.alt.fa"
     output:
         expand("analysis/{refalias}/{analysis}/files/{mapper}/{setting}/repeatmasker/{specimen}.filt.alt.fa.{suffix}", 
-        allow_missing = True, suffix = ['tbl', 'out.gff', 'masked', 'cat'])
+        allow_missing = True, suffix = ['tbl', 'out', 'out.gff', 'masked', 'cat'])
     wildcard_constraints:
         specimen = '[A-Za-z0-9]+'
     params:
@@ -151,16 +211,58 @@ rule analyze_alt_fasta:
         -species {params.species} -dir {params.outdir} {input} &> {log}
         """
 
-rule annotate_repeatmasker:
+rule analyze_repetitive_insertions:
     # Annotates a file with information on RepeatMasker-identified insertions.
     input:
         parsing_utils = "scripts/python/parsing_utils.py",
         vcf = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.filt.vcf.gz",
         out = "analysis/{refalias}/denovo/files/{mapper}/{setting}/repeatmasker/all.filt.alt.fa.out"
     output:
-        tsv = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.annotate_repeatmasker.tsv"
+        tsv = "analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/all.repetitive_insertions.tsv"
     conda:
         "../envs/process_variants.yml"
     threads: 2
     script:
         "../scripts/python/annotate_repeatmasker.py"
+
+rule annotate_edit_standard:
+    # Given a specimen, pulls variants + read names from annotate_repeatmasker output and summarizes 
+    # edit distance for read(s) relative to the reference sequence.
+    input:
+        parsing_utils = "scripts/python/parsing_utils.py",
+        analysis_utils = "scripts/python/analysis_utils.py",
+        bam = "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam",
+        tsv = "analysis/{refalias}/denovo/files/{mapper}/standard/variants/all.repetitive_insertions.tsv"
+    output:
+        tsv = "analysis/{refalias}/denovo/files/{mapper}/standard/variants/{specimen}.annotate_edit_distance.tsv"
+    conda:
+        "../envs/process_variants.yml"
+    threads: 2
+    script:
+        "../scripts/python/annotate_edit_distance.py"
+
+use rule annotate_edit_standard as annotate_edit_duplomap with:
+    input:
+        parsing_utils = "scripts/python/parsing_utils.py",
+        analysis_utils = "scripts/python/analysis_utils.py",
+        bam = "output/alignment/{refalias}/{mapper}/duplomap/mapped/{specimen}/realigned.bam",
+        tsv = "analysis/{refalias}/denovo/files/{mapper}/duplomap/variants/all.repetitive_insertions.tsv"
+    output:
+        tsv = "analysis/{refalias}/denovo/files/{mapper}/duplomap/variants/{specimen}.annotate_edit_distance.tsv"
+
+# rule concat_annotate_edit:
+#     # Combine the per-specimen tabular outputs for each setting.
+#     input:
+#         expand("analysis/{refalias}/denovo/files/{mapper}/{setting}/variants/{specimen}.annotate_edit_distance.tsv")
+#     output:
+#         "analysis/{refalias}/denovo/files/{mapper}/duplomap/variants/all.annotate_edit_distance.tsv"
+#     conda:
+#         "../envs/process_variants.yml"
+#     threads: 2
+#     shell:
+#         """
+#         head -n 1 file1.tsv > combined.tsv
+#         for file in *.tsv; do
+#             tail -n +2 "$file" >> combined.tsv
+#         done
+#         """

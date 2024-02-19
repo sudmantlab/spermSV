@@ -1,7 +1,7 @@
 rule sniffles_standard:
     input:
-        bam = "output/alignment/{refalias}/{mapper}/standard/{specimen}.sorted.merged.bam",
-        index = "output/alignment/{refalias}/{mapper}/standard/{specimen}.sorted.merged.bam.bai"
+        bam = "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam",
+        index = "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam.bai"
     output:
         vcf='output/alignment/{refalias}/{mapper}/standard/variants/sniffles_standard/{specimen}.vcf.gz',
         snf='output/alignment/{refalias}/{mapper}/standard/variants/sniffles_standard/{specimen}.snf',
@@ -37,8 +37,8 @@ rule sniffles_mosaic:
     # FOR NOW: try config with --minsupport=1; may need to configure minsupport-auto-mult (the coverage minsupport equation)
     # worst case, enable --no-qc flag.
     input:
-        bam = "output/alignment/{refalias}/{mapper}/standard/{specimen}.sorted.merged.bam",
-        index = "output/alignment/{refalias}/{mapper}/standard/{specimen}.sorted.merged.bam.bai"
+        bam = "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam",
+        index = "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam.bai"
     output:
         vcf='output/alignment/{refalias}/{mapper}/standard/variants/sniffles_mosaic/{specimen}.vcf.gz',
         snf='output/alignment/{refalias}/{mapper}/standard/variants/sniffles_mosaic/{specimen}.snf',

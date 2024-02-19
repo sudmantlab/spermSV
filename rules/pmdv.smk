@@ -4,14 +4,15 @@ rule pepper_margin_deepvariant_hifi:
     # there are issues with intermediate_files and logs directories not being able to play well w/ each other
     # unless kept in separate directories per chr
     input:
-        bam = "output/mapping/{refalias}/minimap2/{setting}/{specimen}.sorted.merged.bam"
+        bam = "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam"
     output:
-        "output/CHM13/pepper_etc/{specimen}/{region}/{specimen}.{region}.vcf.gz" 
+        # figure out how to merge outputs and then mark this as temp
+        "output/alignment/{refalias}/{mapper}/{setting}/variants/pmdv/{specimen}/{region}/{specimen}.{region}.vcf.gz" 
     params:
         mount_dir = config['singularity']['mount_dir'],
         refgenome = config['reference']['fasta'],
         outdir = lambda wildcards, output: os.path.dirname(output[0]),
-        mapQ = config['pepper_etc']['mapQ']
+        mapQ = config['pmdv']['mapQ']
     threads: 4
     conda:
         # borrow existing environment
@@ -23,7 +24,7 @@ rule pepper_margin_deepvariant_hifi:
         # Run PEPPER-Margin-DeepVariant from docker image
         # heads up, it's a lot of blobs
 
-        singularity exec --bind {params.mount_dir} \
+        apptainer exec --bind {params.mount_dir} \
         docker://kishwars/pepper_deepvariant:r0.8 \
         run_pepper_margin_deepvariant call_variant \
         --hifi --phased_output -b {input.bam} -f {params.refgenome} -o {params.outdir} \
