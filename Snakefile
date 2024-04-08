@@ -41,7 +41,6 @@ include: "rules/process_mosaic.smk"
 
 rule all:
     input:
-        # assemblies
         expand("output/assembly/hifiasm/{specimen}/{specimen}.asm.bp.{hap}.p_ctg.gfa", hap = ['hap1', 'hap2'], specimen = specimens),
         expand("output/assembly/hifiasm/{specimen}/{specimen}.{hap}.fa", specimen = specimens, hap = ['hap1', 'hap2'])
         # tandem repeat genotyping
