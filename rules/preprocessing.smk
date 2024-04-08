@@ -32,7 +32,6 @@ rule uBAMtoFastq:
         # /global/software/sl-7.x86_64/modules/langs/python/3.9/envs
         """
         export PATH=`echo $PATH | tr ":" "\n" | grep -v "sl-7.x86_64" | tr "\n" ":"`
-
         samtools fastq -@ {threads} -c 6 -T MM,ML {input} -0 {output}
         """
 
@@ -50,13 +49,16 @@ rule HiFiAdapterFilt:
     input: 
         "output/preprocessing/uBAMtoFastq/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz"
     output:
-        filtered = "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.fastq.gz",
-        stats = "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.stats",
+        "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.fastq.gz",
+        "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.stats",
     log: "logs/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.log"
     params:
-        outDir = lambda wildcards, output: os.path.dirname(output[0]),
-        inDir = lambda wildcards, output: os.path.dirname(input[0]),
-        inPref = lambda wildcards, output: re.sub('(?<=ccs).*', '', os.path.basename(input[0])),        
+        # outDir = lambda wildcards, output: os.path.dirname(output[0]),
+        # inDir = lambda wildcards, output: os.path.dirname(input[0]),
+        # inPref = lambda wildcards, output: re.sub('(?<=ccs).*', '', os.path.basename(input[0])),
+        outDir = "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}",
+        inDir = "output/preprocessing/uBAMtoFastq/{specimen}/{lane}",
+        inPref = "{smrtcell}.ccs"
     conda: "../envs/preprocessing.yml"
     threads: 10
     shell: 

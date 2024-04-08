@@ -1,0 +1,12 @@
+name: pangenome
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - nodejs=18.7.0
+  - hifiasm=0.19.5
+  - samtools
+  - gfatools
+  - vg=1.55.0
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/pangenome

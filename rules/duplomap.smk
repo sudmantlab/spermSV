@@ -1,9 +1,12 @@
 rule duplomap:
     input:
-        "output/alignment/{refalias}/{mapper}/standard/{specimen}.sorted.merged.bam"
+        bam = "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam",
+        index = "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam"
     output:
         "output/alignment/{refalias}/{mapper}/duplomap/mapped/{specimen}/realigned.bam",
         "output/alignment/{refalias}/{mapper}/duplomap/mapped/{specimen}/psvs.vcf.gz"
+    wildcard_constraints:
+        refalias=["hg38", "CHM13"]
     params:
         refgenome = config['reference']['fasta'].strip('.gz'),
         db = config['duplomap']['db'],
@@ -15,7 +18,7 @@ rule duplomap:
     shell:
         """
         duplomap -@ {threads} \
-        -i {input} -d {params.db} \
+        -i {input.bam} -d {params.db} \
         -r {params.refgenome} \
         -o {params.outdir}/{wildcards.specimen} --continue
         """

@@ -1,0 +1,495 @@
+Building DAG of jobs...
+Your conda installation is not configured to use strict channel priorities. This is however crucial for having robust and correct environments (for details, see https://conda-forge.org/docs/user/tipsandtricks.html). Please consider to configure strict priorities by executing 'conda config --set channel_priority strict'.
+Job stats:
+job                 count
+----------------  -------
+collate_bams            5
+duplomap_to_self        5
+gfaToFa                 4
+hifiasm                 2
+minimap2               10
+samtools_sort          10
+total                  36
+
+
+[Thu Apr  4 09:53:20 2024]
+rule minimap2:
+    input: output/preprocessing/HiFiAdapterFilt/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_230054_s2.hifi_reads.bc2069.ccs.filt.fastq.gz
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_230054_s2.hifi_reads.bc2069.filt.bam
+    jobid: 71
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_230054_s2.hifi_reads.bc2069.filt.bam
+    wildcards: refalias=self_assembly, specimen=895, lane=PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex, smrtcell=m84053_230630_230054_s2.hifi_reads.bc2069
+    resources: tmpdir=/tmp
+
+
+        minimap2 --version && minimap2 /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz output/preprocessing/HiFiAdapterFilt/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_230054_s2.hifi_reads.bc2069.ccs.filt.fastq.gz -t 1 -ax map-hifi -Y -y -L --eqx --cs --MD -R '@RG\tID:895\tSM:895\tPL:PACBIO' | samtools view -q 10 -bT /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz -o output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_230054_s2.hifi_reads.bc2069.filt.bam
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule minimap2:
+    input: output/preprocessing/HiFiAdapterFilt/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230911_210354_s1.hifi_reads.bc2020.ccs.filt.fastq.gz
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230911_210354_s1.hifi_reads.bc2020.filt.bam
+    jobid: 26
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230911_210354_s1.hifi_reads.bc2020.filt.bam
+    wildcards: refalias=self_assembly, specimen=900, lane=PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex, smrtcell=m84053_230911_210354_s1.hifi_reads.bc2020
+    resources: tmpdir=/tmp
+
+
+        minimap2 --version && minimap2 /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz output/preprocessing/HiFiAdapterFilt/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230911_210354_s1.hifi_reads.bc2020.ccs.filt.fastq.gz -t 1 -ax map-hifi -Y -y -L --eqx --cs --MD -R '@RG\tID:900\tSM:900\tPL:PACBIO' | samtools view -q 10 -bT /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz -o output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230911_210354_s1.hifi_reads.bc2020.filt.bam
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule minimap2:
+    input: output/preprocessing/HiFiAdapterFilt/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230801_204324_s3.hifi_reads.bc2089.ccs.filt.fastq.gz
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230801_204324_s3.hifi_reads.bc2089.filt.bam
+    jobid: 36
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230801_204324_s3.hifi_reads.bc2089.filt.bam
+    wildcards: refalias=self_assembly, specimen=898, lane=PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex, smrtcell=m84053_230801_204324_s3.hifi_reads.bc2089
+    resources: tmpdir=/tmp
+
+
+        minimap2 --version && minimap2 /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz output/preprocessing/HiFiAdapterFilt/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230801_204324_s3.hifi_reads.bc2089.ccs.filt.fastq.gz -t 1 -ax map-hifi -Y -y -L --eqx --cs --MD -R '@RG\tID:898\tSM:898\tPL:PACBIO' | samtools view -q 10 -bT /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz -o output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230801_204324_s3.hifi_reads.bc2089.filt.bam
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule minimap2:
+    input: output/preprocessing/HiFiAdapterFilt/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230630_233200_s3.hifi_reads.bc2070.ccs.filt.fastq.gz
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230630_233200_s3.hifi_reads.bc2070.filt.bam
+    jobid: 41
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230630_233200_s3.hifi_reads.bc2070.filt.bam
+    wildcards: refalias=self_assembly, specimen=898, lane=PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex, smrtcell=m84053_230630_233200_s3.hifi_reads.bc2070
+    resources: tmpdir=/tmp
+
+
+        minimap2 --version && minimap2 /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz output/preprocessing/HiFiAdapterFilt/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230630_233200_s3.hifi_reads.bc2070.ccs.filt.fastq.gz -t 1 -ax map-hifi -Y -y -L --eqx --cs --MD -R '@RG\tID:898\tSM:898\tPL:PACBIO' | samtools view -q 10 -bT /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz -o output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230630_233200_s3.hifi_reads.bc2070.filt.bam
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule minimap2:
+    input: output/preprocessing/HiFiAdapterFilt/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230908_185731_s4.hifi_reads.bc2019.ccs.filt.fastq.gz
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230908_185731_s4.hifi_reads.bc2019.filt.bam
+    jobid: 6
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230908_185731_s4.hifi_reads.bc2019.filt.bam
+    wildcards: refalias=self_assembly, specimen=899, lane=PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex, smrtcell=m84053_230908_185731_s4.hifi_reads.bc2019
+    resources: tmpdir=/tmp
+
+
+        minimap2 --version && minimap2 /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz output/preprocessing/HiFiAdapterFilt/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230908_185731_s4.hifi_reads.bc2019.ccs.filt.fastq.gz -t 1 -ax map-hifi -Y -y -L --eqx --cs --MD -R '@RG\tID:899\tSM:899\tPL:PACBIO' | samtools view -q 10 -bT /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz -o output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230908_185731_s4.hifi_reads.bc2019.filt.bam
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule minimap2:
+    input: output/preprocessing/HiFiAdapterFilt/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230601_202536_s4.hifi_reads.bc2050.ccs.filt.fastq.gz
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230601_202536_s4.hifi_reads.bc2050.filt.bam
+    jobid: 51
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230601_202536_s4.hifi_reads.bc2050.filt.bam
+    wildcards: refalias=self_assembly, specimen=894, lane=PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex, smrtcell=m84053_230601_202536_s4.hifi_reads.bc2050
+    resources: tmpdir=/tmp
+
+
+        minimap2 --version && minimap2 /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz output/preprocessing/HiFiAdapterFilt/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230601_202536_s4.hifi_reads.bc2050.ccs.filt.fastq.gz -t 1 -ax map-hifi -Y -y -L --eqx --cs --MD -R '@RG\tID:894\tSM:894\tPL:PACBIO' | samtools view -q 10 -bT /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz -o output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230601_202536_s4.hifi_reads.bc2050.filt.bam
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule minimap2:
+    input: output/preprocessing/HiFiAdapterFilt/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230629_234400_s4.hifi_reads.bc2068.ccs.filt.fastq.gz
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230629_234400_s4.hifi_reads.bc2068.filt.bam
+    jobid: 56
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230629_234400_s4.hifi_reads.bc2068.filt.bam
+    wildcards: refalias=self_assembly, specimen=894, lane=PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex, smrtcell=m84053_230629_234400_s4.hifi_reads.bc2068
+    resources: tmpdir=/tmp
+
+
+        minimap2 --version && minimap2 /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz output/preprocessing/HiFiAdapterFilt/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230629_234400_s4.hifi_reads.bc2068.ccs.filt.fastq.gz -t 1 -ax map-hifi -Y -y -L --eqx --cs --MD -R '@RG\tID:894\tSM:894\tPL:PACBIO' | samtools view -q 10 -bT /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz -o output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230629_234400_s4.hifi_reads.bc2068.filt.bam
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule hifiasm:
+    input: output/preprocessing/HiFiAdapterFilt/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230908_185731_s4.hifi_reads.bc2019.ccs.filt.fastq.gz, output/preprocessing/HiFiAdapterFilt/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230911_203330_s4.hifi_reads.bc2019.ccs.filt.fastq.gz
+    output: output/assembly/hifiasm/899/899.asm.bp.hap1.p_ctg.gfa, output/assembly/hifiasm/899/899.asm.bp.hap1.p_ctg.lowQ.bed, output/assembly/hifiasm/899/899.asm.bp.hap1.p_ctg.noseq.gfa, output/assembly/hifiasm/899/899.asm.bp.hap2.p_ctg.gfa, output/assembly/hifiasm/899/899.asm.bp.hap2.p_ctg.lowQ.bed, output/assembly/hifiasm/899/899.asm.bp.hap2.p_ctg.noseq.gfa, output/assembly/hifiasm/899/899.asm.bp.p_ctg.gfa, output/assembly/hifiasm/899/899.asm.bp.p_ctg.lowQ.bed, output/assembly/hifiasm/899/899.asm.bp.p_ctg.noseq.gfa, output/assembly/hifiasm/899/899.asm.bp.p_utg.gfa, output/assembly/hifiasm/899/899.asm.bp.p_utg.lowQ.bed, output/assembly/hifiasm/899/899.asm.bp.p_utg.noseq.gfa, output/assembly/hifiasm/899/899.asm.bp.r_utg.gfa, output/assembly/hifiasm/899/899.asm.bp.r_utg.lowQ.bed, output/assembly/hifiasm/899/899.asm.bp.r_utg.noseq.gfa, output/assembly/hifiasm/899/899.asm.ec.bin, output/assembly/hifiasm/899/899.asm.ovlp.reverse.bin, output/assembly/hifiasm/899/899.asm.ovlp.source.bin
+    log: logs/assembly/hifiasm/899/899.asm.log
+    jobid: 13
+    reason: Software environment definition has changed since last execution
+    wildcards: specimen=899
+    resources: tmpdir=/tmp
+
+
+        hifiasm -o output/assembly/hifiasm/899/899.asm -t 1 output/preprocessing/HiFiAdapterFilt/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230908_185731_s4.hifi_reads.bc2019.ccs.filt.fastq.gz output/preprocessing/HiFiAdapterFilt/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230911_203330_s4.hifi_reads.bc2019.ccs.filt.fastq.gz > logs/assembly/hifiasm/899/899.asm.log 2>&1
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule minimap2:
+    input: output/preprocessing/HiFiAdapterFilt/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230911_203330_s4.hifi_reads.bc2019.ccs.filt.fastq.gz
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230911_203330_s4.hifi_reads.bc2019.filt.bam
+    jobid: 11
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230911_203330_s4.hifi_reads.bc2019.filt.bam
+    wildcards: refalias=self_assembly, specimen=899, lane=PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex, smrtcell=m84053_230911_203330_s4.hifi_reads.bc2019
+    resources: tmpdir=/tmp
+
+
+        minimap2 --version && minimap2 /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz output/preprocessing/HiFiAdapterFilt/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230911_203330_s4.hifi_reads.bc2019.ccs.filt.fastq.gz -t 1 -ax map-hifi -Y -y -L --eqx --cs --MD -R '@RG\tID:899\tSM:899\tPL:PACBIO' | samtools view -q 10 -bT /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz -o output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230911_203330_s4.hifi_reads.bc2019.filt.bam
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule hifiasm:
+    input: output/preprocessing/HiFiAdapterFilt/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230908_192836_s1.hifi_reads.bc2020.ccs.filt.fastq.gz, output/preprocessing/HiFiAdapterFilt/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230911_210354_s1.hifi_reads.bc2020.ccs.filt.fastq.gz
+    output: output/assembly/hifiasm/900/900.asm.bp.hap1.p_ctg.gfa, output/assembly/hifiasm/900/900.asm.bp.hap1.p_ctg.lowQ.bed, output/assembly/hifiasm/900/900.asm.bp.hap1.p_ctg.noseq.gfa, output/assembly/hifiasm/900/900.asm.bp.hap2.p_ctg.gfa, output/assembly/hifiasm/900/900.asm.bp.hap2.p_ctg.lowQ.bed, output/assembly/hifiasm/900/900.asm.bp.hap2.p_ctg.noseq.gfa, output/assembly/hifiasm/900/900.asm.bp.p_ctg.gfa, output/assembly/hifiasm/900/900.asm.bp.p_ctg.lowQ.bed, output/assembly/hifiasm/900/900.asm.bp.p_ctg.noseq.gfa, output/assembly/hifiasm/900/900.asm.bp.p_utg.gfa, output/assembly/hifiasm/900/900.asm.bp.p_utg.lowQ.bed, output/assembly/hifiasm/900/900.asm.bp.p_utg.noseq.gfa, output/assembly/hifiasm/900/900.asm.bp.r_utg.gfa, output/assembly/hifiasm/900/900.asm.bp.r_utg.lowQ.bed, output/assembly/hifiasm/900/900.asm.bp.r_utg.noseq.gfa, output/assembly/hifiasm/900/900.asm.ec.bin, output/assembly/hifiasm/900/900.asm.ovlp.reverse.bin, output/assembly/hifiasm/900/900.asm.ovlp.source.bin
+    log: logs/assembly/hifiasm/900/900.asm.log
+    jobid: 28
+    reason: Software environment definition has changed since last execution
+    wildcards: specimen=900
+    resources: tmpdir=/tmp
+
+
+        hifiasm -o output/assembly/hifiasm/900/900.asm -t 1 output/preprocessing/HiFiAdapterFilt/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230908_192836_s1.hifi_reads.bc2020.ccs.filt.fastq.gz output/preprocessing/HiFiAdapterFilt/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230911_210354_s1.hifi_reads.bc2020.ccs.filt.fastq.gz > logs/assembly/hifiasm/900/900.asm.log 2>&1
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule minimap2:
+    input: output/preprocessing/HiFiAdapterFilt/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230908_192836_s1.hifi_reads.bc2020.ccs.filt.fastq.gz
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230908_192836_s1.hifi_reads.bc2020.filt.bam
+    jobid: 21
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230908_192836_s1.hifi_reads.bc2020.filt.bam
+    wildcards: refalias=self_assembly, specimen=900, lane=PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex, smrtcell=m84053_230908_192836_s1.hifi_reads.bc2020
+    resources: tmpdir=/tmp
+
+
+        minimap2 --version && minimap2 /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz output/preprocessing/HiFiAdapterFilt/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230908_192836_s1.hifi_reads.bc2020.ccs.filt.fastq.gz -t 1 -ax map-hifi -Y -y -L --eqx --cs --MD -R '@RG\tID:900\tSM:900\tPL:PACBIO' | samtools view -q 10 -bT /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz -o output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230908_192836_s1.hifi_reads.bc2020.filt.bam
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule minimap2:
+    input: output/preprocessing/HiFiAdapterFilt/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_222948_s1.hifi_reads.bc2069.ccs.filt.fastq.gz
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_222948_s1.hifi_reads.bc2069.filt.bam
+    jobid: 66
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_222948_s1.hifi_reads.bc2069.filt.bam
+    wildcards: refalias=self_assembly, specimen=895, lane=PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex, smrtcell=m84053_230630_222948_s1.hifi_reads.bc2069
+    resources: tmpdir=/tmp
+
+
+        minimap2 --version && minimap2 /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz output/preprocessing/HiFiAdapterFilt/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_222948_s1.hifi_reads.bc2069.ccs.filt.fastq.gz -t 1 -ax map-hifi -Y -y -L --eqx --cs --MD -R '@RG\tID:895\tSM:895\tPL:PACBIO' | samtools view -q 10 -bT /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz -o output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_222948_s1.hifi_reads.bc2069.filt.bam
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule samtools_sort:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230911_210354_s1.hifi_reads.bc2020.filt.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230911_210354_s1.hifi_reads.bc2020.filt.sorted.bam
+    jobid: 22
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230911_210354_s1.hifi_reads.bc2020.filt.sorted.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230911_210354_s1.hifi_reads.bc2020.filt.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=900, lane=PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex, smrtcell=m84053_230911_210354_s1.hifi_reads.bc2020
+    resources: tmpdir=/tmp
+
+samtools sort -@ 1 --output-fmt='BAM' -o output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230911_210354_s1.hifi_reads.bc2020.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230911_210354_s1.hifi_reads.bc2020.filt.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule samtools_sort:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230629_234400_s4.hifi_reads.bc2068.filt.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230629_234400_s4.hifi_reads.bc2068.filt.sorted.bam
+    jobid: 52
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230629_234400_s4.hifi_reads.bc2068.filt.sorted.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230629_234400_s4.hifi_reads.bc2068.filt.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=894, lane=PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex, smrtcell=m84053_230629_234400_s4.hifi_reads.bc2068
+    resources: tmpdir=/tmp
+
+samtools sort -@ 1 --output-fmt='BAM' -o output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230629_234400_s4.hifi_reads.bc2068.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230629_234400_s4.hifi_reads.bc2068.filt.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule gfaToFa:
+    input: output/assembly/hifiasm/900/900.asm.bp.hap1.p_ctg.gfa
+    output: output/assembly/hifiasm/900/900.hap1.fa
+    log: logs/assembly/hifiasm/900/900.hap1.fa.log
+    jobid: 27
+    reason: Input files updated by another job: output/assembly/hifiasm/900/900.asm.bp.hap1.p_ctg.gfa
+    wildcards: specimen=900, hap=hap1
+    resources: tmpdir=/tmp
+
+gfatools gfa2fa output/assembly/hifiasm/900/900.asm.bp.hap1.p_ctg.gfa > output/assembly/hifiasm/900/900.hap1.fa 2> logs/assembly/hifiasm/900/900.hap1.fa.log
+
+[Thu Apr  4 09:53:20 2024]
+rule samtools_sort:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230908_192836_s1.hifi_reads.bc2020.filt.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230908_192836_s1.hifi_reads.bc2020.filt.sorted.bam
+    jobid: 17
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230908_192836_s1.hifi_reads.bc2020.filt.sorted.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230908_192836_s1.hifi_reads.bc2020.filt.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=900, lane=PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex, smrtcell=m84053_230908_192836_s1.hifi_reads.bc2020
+    resources: tmpdir=/tmp
+
+samtools sort -@ 1 --output-fmt='BAM' -o output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230908_192836_s1.hifi_reads.bc2020.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230908_192836_s1.hifi_reads.bc2020.filt.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule gfaToFa:
+    input: output/assembly/hifiasm/899/899.asm.bp.hap1.p_ctg.gfa
+    output: output/assembly/hifiasm/899/899.hap1.fa
+    log: logs/assembly/hifiasm/899/899.hap1.fa.log
+    jobid: 12
+    reason: Input files updated by another job: output/assembly/hifiasm/899/899.asm.bp.hap1.p_ctg.gfa
+    wildcards: specimen=899, hap=hap1
+    resources: tmpdir=/tmp
+
+gfatools gfa2fa output/assembly/hifiasm/899/899.asm.bp.hap1.p_ctg.gfa > output/assembly/hifiasm/899/899.hap1.fa 2> logs/assembly/hifiasm/899/899.hap1.fa.log
+
+[Thu Apr  4 09:53:20 2024]
+rule gfaToFa:
+    input: output/assembly/hifiasm/899/899.asm.bp.hap2.p_ctg.gfa
+    output: output/assembly/hifiasm/899/899.hap2.fa
+    log: logs/assembly/hifiasm/899/899.hap2.fa.log
+    jobid: 14
+    reason: Input files updated by another job: output/assembly/hifiasm/899/899.asm.bp.hap2.p_ctg.gfa
+    wildcards: specimen=899, hap=hap2
+    resources: tmpdir=/tmp
+
+gfatools gfa2fa output/assembly/hifiasm/899/899.asm.bp.hap2.p_ctg.gfa > output/assembly/hifiasm/899/899.hap2.fa 2> logs/assembly/hifiasm/899/899.hap2.fa.log
+
+[Thu Apr  4 09:53:20 2024]
+rule samtools_sort:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230908_185731_s4.hifi_reads.bc2019.filt.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230908_185731_s4.hifi_reads.bc2019.filt.sorted.bam
+    jobid: 2
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230908_185731_s4.hifi_reads.bc2019.filt.sorted.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230908_185731_s4.hifi_reads.bc2019.filt.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=899, lane=PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex, smrtcell=m84053_230908_185731_s4.hifi_reads.bc2019
+    resources: tmpdir=/tmp
+
+samtools sort -@ 1 --output-fmt='BAM' -o output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230908_185731_s4.hifi_reads.bc2019.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230908_185731_s4.hifi_reads.bc2019.filt.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule samtools_sort:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230801_204324_s3.hifi_reads.bc2089.filt.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230801_204324_s3.hifi_reads.bc2089.filt.sorted.bam
+    jobid: 32
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230801_204324_s3.hifi_reads.bc2089.filt.sorted.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230801_204324_s3.hifi_reads.bc2089.filt.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=898, lane=PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex, smrtcell=m84053_230801_204324_s3.hifi_reads.bc2089
+    resources: tmpdir=/tmp
+
+samtools sort -@ 1 --output-fmt='BAM' -o output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230801_204324_s3.hifi_reads.bc2089.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230801_204324_s3.hifi_reads.bc2089.filt.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule gfaToFa:
+    input: output/assembly/hifiasm/900/900.asm.bp.hap2.p_ctg.gfa
+    output: output/assembly/hifiasm/900/900.hap2.fa
+    log: logs/assembly/hifiasm/900/900.hap2.fa.log
+    jobid: 29
+    reason: Input files updated by another job: output/assembly/hifiasm/900/900.asm.bp.hap2.p_ctg.gfa
+    wildcards: specimen=900, hap=hap2
+    resources: tmpdir=/tmp
+
+gfatools gfa2fa output/assembly/hifiasm/900/900.asm.bp.hap2.p_ctg.gfa > output/assembly/hifiasm/900/900.hap2.fa 2> logs/assembly/hifiasm/900/900.hap2.fa.log
+
+[Thu Apr  4 09:53:20 2024]
+rule samtools_sort:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230601_202536_s4.hifi_reads.bc2050.filt.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230601_202536_s4.hifi_reads.bc2050.filt.sorted.bam
+    jobid: 47
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230601_202536_s4.hifi_reads.bc2050.filt.sorted.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230601_202536_s4.hifi_reads.bc2050.filt.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=894, lane=PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex, smrtcell=m84053_230601_202536_s4.hifi_reads.bc2050
+    resources: tmpdir=/tmp
+
+samtools sort -@ 1 --output-fmt='BAM' -o output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230601_202536_s4.hifi_reads.bc2050.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230601_202536_s4.hifi_reads.bc2050.filt.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule samtools_sort:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_222948_s1.hifi_reads.bc2069.filt.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_222948_s1.hifi_reads.bc2069.filt.sorted.bam
+    jobid: 62
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_222948_s1.hifi_reads.bc2069.filt.sorted.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_222948_s1.hifi_reads.bc2069.filt.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=895, lane=PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex, smrtcell=m84053_230630_222948_s1.hifi_reads.bc2069
+    resources: tmpdir=/tmp
+
+samtools sort -@ 1 --output-fmt='BAM' -o output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_222948_s1.hifi_reads.bc2069.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_222948_s1.hifi_reads.bc2069.filt.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule samtools_sort:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_230054_s2.hifi_reads.bc2069.filt.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_230054_s2.hifi_reads.bc2069.filt.sorted.bam
+    jobid: 67
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_230054_s2.hifi_reads.bc2069.filt.sorted.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_230054_s2.hifi_reads.bc2069.filt.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=895, lane=PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex, smrtcell=m84053_230630_230054_s2.hifi_reads.bc2069
+    resources: tmpdir=/tmp
+
+samtools sort -@ 1 --output-fmt='BAM' -o output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_230054_s2.hifi_reads.bc2069.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_230054_s2.hifi_reads.bc2069.filt.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule samtools_sort:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230911_203330_s4.hifi_reads.bc2019.filt.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230911_203330_s4.hifi_reads.bc2019.filt.sorted.bam
+    jobid: 7
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230911_203330_s4.hifi_reads.bc2019.filt.sorted.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230911_203330_s4.hifi_reads.bc2019.filt.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=899, lane=PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex, smrtcell=m84053_230911_203330_s4.hifi_reads.bc2019
+    resources: tmpdir=/tmp
+
+samtools sort -@ 1 --output-fmt='BAM' -o output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230911_203330_s4.hifi_reads.bc2019.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230911_203330_s4.hifi_reads.bc2019.filt.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule samtools_sort:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230630_233200_s3.hifi_reads.bc2070.filt.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230630_233200_s3.hifi_reads.bc2070.filt.sorted.bam
+    jobid: 37
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230630_233200_s3.hifi_reads.bc2070.filt.sorted.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230630_233200_s3.hifi_reads.bc2070.filt.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=898, lane=PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex, smrtcell=m84053_230630_233200_s3.hifi_reads.bc2070
+    resources: tmpdir=/tmp
+
+samtools sort -@ 1 --output-fmt='BAM' -o output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230630_233200_s3.hifi_reads.bc2070.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230630_233200_s3.hifi_reads.bc2070.filt.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230911_210354_s1.hifi_reads.bc2020.filt.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230629_234400_s4.hifi_reads.bc2068.filt.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/m84053_230908_192836_s1.hifi_reads.bc2020.filt.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230908_185731_s4.hifi_reads.bc2019.filt.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230801_204324_s3.hifi_reads.bc2089.filt.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/m84053_230601_202536_s4.hifi_reads.bc2050.filt.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_222948_s1.hifi_reads.bc2069.filt.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/m84053_230630_230054_s2.hifi_reads.bc2069.filt.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/m84053_230911_203330_s4.hifi_reads.bc2019.filt.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/m84053_230630_233200_s3.hifi_reads.bc2070.filt.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule collate_bams:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230601_202536_s4.hifi_reads.bc2050.filt.sorted.bam, output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230629_234400_s4.hifi_reads.bc2068.filt.sorted.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/894.sorted.merged.bam
+    jobid: 46
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/894.sorted.merged.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230601_202536_s4.hifi_reads.bc2050.filt.sorted.bam, output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230629_234400_s4.hifi_reads.bc2068.filt.sorted.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=894
+    resources: tmpdir=/tmp
+
+samtools merge -r -@ 1 --output-fmt='BAM' output/alignment/self_assembly/minimap2/standard/mapped/894.sorted.merged.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230601_202536_s4.hifi_reads.bc2050.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230629_234400_s4.hifi_reads.bc2068.filt.sorted.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule collate_bams:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230908_192836_s1.hifi_reads.bc2020.filt.sorted.bam, output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230911_210354_s1.hifi_reads.bc2020.filt.sorted.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/900.sorted.merged.bam
+    jobid: 16
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/900.sorted.merged.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230911_210354_s1.hifi_reads.bc2020.filt.sorted.bam, output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230908_192836_s1.hifi_reads.bc2020.filt.sorted.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=900
+    resources: tmpdir=/tmp
+
+samtools merge -r -@ 1 --output-fmt='BAM' output/alignment/self_assembly/minimap2/standard/mapped/900.sorted.merged.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230908_192836_s1.hifi_reads.bc2020.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230911_210354_s1.hifi_reads.bc2020.filt.sorted.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule collate_bams:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230908_185731_s4.hifi_reads.bc2019.filt.sorted.bam, output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230911_203330_s4.hifi_reads.bc2019.filt.sorted.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/899.sorted.merged.bam
+    jobid: 1
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/899.sorted.merged.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230908_185731_s4.hifi_reads.bc2019.filt.sorted.bam, output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230911_203330_s4.hifi_reads.bc2019.filt.sorted.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=899
+    resources: tmpdir=/tmp
+
+samtools merge -r -@ 1 --output-fmt='BAM' output/alignment/self_assembly/minimap2/standard/mapped/899.sorted.merged.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230908_185731_s4.hifi_reads.bc2019.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230911_203330_s4.hifi_reads.bc2019.filt.sorted.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule collate_bams:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_222948_s1.hifi_reads.bc2069.filt.sorted.bam, output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_230054_s2.hifi_reads.bc2069.filt.sorted.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/895.sorted.merged.bam
+    jobid: 61
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/895.sorted.merged.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_230054_s2.hifi_reads.bc2069.filt.sorted.bam, output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_222948_s1.hifi_reads.bc2069.filt.sorted.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=895
+    resources: tmpdir=/tmp
+
+samtools merge -r -@ 1 --output-fmt='BAM' output/alignment/self_assembly/minimap2/standard/mapped/895.sorted.merged.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_222948_s1.hifi_reads.bc2069.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_230054_s2.hifi_reads.bc2069.filt.sorted.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule collate_bams:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230801_204324_s3.hifi_reads.bc2089.filt.sorted.bam, output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230630_233200_s3.hifi_reads.bc2070.filt.sorted.bam
+    output: output/alignment/self_assembly/minimap2/standard/mapped/898.sorted.merged.bam
+    jobid: 31
+    reason: Missing output files: output/alignment/self_assembly/minimap2/standard/mapped/898.sorted.merged.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230630_233200_s3.hifi_reads.bc2070.filt.sorted.bam, output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230801_204324_s3.hifi_reads.bc2089.filt.sorted.bam
+    wildcards: refalias=self_assembly, mapper=minimap2, specimen=898
+    resources: tmpdir=/tmp
+
+samtools merge -r -@ 1 --output-fmt='BAM' output/alignment/self_assembly/minimap2/standard/mapped/898.sorted.merged.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230801_204324_s3.hifi_reads.bc2089.filt.sorted.bam output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230630_233200_s3.hifi_reads.bc2070.filt.sorted.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1412_1_D01_PEWA_24hours_19kbExpressCCSv3190pM2hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230601_202536_s4.hifi_reads.bc2050.filt.sorted.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/894/PBmixRevio1417_1_D01_PFBE_24hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant1894_CCSExpressIndex/894_m84053_230629_234400_s4.hifi_reads.bc2068.filt.sorted.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1443_2_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230908_192836_s1.hifi_reads.bc2020.filt.sorted.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/900/PBmixRevio1444_1_B01_PFIC_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2020_CCSExpressIndex/900_m84053_230911_210354_s1.hifi_reads.bc2020.filt.sorted.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1443_2_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230908_185731_s4.hifi_reads.bc2019.filt.sorted.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/899/PBmixRevio1444_1_A01_PFIB_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant7899_bc2019_CCSExpressIndex/899_m84053_230911_203330_s4.hifi_reads.bc2019.filt.sorted.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_A01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_222948_s1.hifi_reads.bc2069.filt.sorted.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/895/PBmixRevio1417_2_B01_PFBF_24hours_21kbExpressCCSv32hrPE_200pM_HumanSudmant2895_CCSExpressIndex/895_m84053_230630_230054_s2.hifi_reads.bc2069.filt.sorted.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1429_1_C01_PFCR_24hours_18kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230801_204324_s3.hifi_reads.bc2089.filt.sorted.bam
+Would remove temporary output output/alignment/self_assembly/minimap2/standard/mapped/temp/898/PBmixRevio1417_2_C01_PFBG_24hours_23kbExpressCCSv32hrPE_200pM_HumanSudmant3898_CCSExpressIndex/898_m84053_230630_233200_s3.hifi_reads.bc2070.filt.sorted.bam
+
+[Thu Apr  4 09:53:20 2024]
+rule duplomap_to_self:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/899.sorted.merged.bam, output/assembly/hifiasm/899/899.hap1.fa, output/assembly/hifiasm/899/899.hap2.fa
+    output: output/alignment/self_assembly/minimap2/duplomap/mapped/899/realigned.bam, output/alignment/self_assembly/minimap2/duplomap/mapped/899/psvs.vcf.gz
+    jobid: 0
+    reason: Input files updated by another job: output/assembly/hifiasm/899/899.hap2.fa, output/alignment/self_assembly/minimap2/standard/mapped/899.sorted.merged.bam, output/assembly/hifiasm/899/899.hap1.fa
+    wildcards: mapper=minimap2, specimen=899
+    resources: tmpdir=/tmp
+
+
+        duplomap -@ 1         -i output/alignment/self_assembly/minimap2/standard/mapped/899.sorted.merged.bam output/assembly/hifiasm/899/899.hap1.fa output/assembly/hifiasm/899/899.hap2.fa -d /global/scratch/users/stacy-l/spermSV/config/packages/duplomap/hg38         -r <(cat output/assembly/hifiasm/899/899.hap1.fa output/assembly/hifiasm/899/899.hap2.fa)         -o output/alignment/self_assembly/minimap2/duplomap/mapped/899/899 --continue
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule duplomap_to_self:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/900.sorted.merged.bam, output/assembly/hifiasm/900/900.hap1.fa, output/assembly/hifiasm/900/900.hap2.fa
+    output: output/alignment/self_assembly/minimap2/duplomap/mapped/900/realigned.bam, output/alignment/self_assembly/minimap2/duplomap/mapped/900/psvs.vcf.gz
+    jobid: 15
+    reason: Input files updated by another job: output/assembly/hifiasm/900/900.hap2.fa, output/alignment/self_assembly/minimap2/standard/mapped/900.sorted.merged.bam, output/assembly/hifiasm/900/900.hap1.fa
+    wildcards: mapper=minimap2, specimen=900
+    resources: tmpdir=/tmp
+
+
+        duplomap -@ 1         -i output/alignment/self_assembly/minimap2/standard/mapped/900.sorted.merged.bam output/assembly/hifiasm/900/900.hap1.fa output/assembly/hifiasm/900/900.hap2.fa -d /global/scratch/users/stacy-l/spermSV/config/packages/duplomap/hg38         -r <(cat output/assembly/hifiasm/900/900.hap1.fa output/assembly/hifiasm/900/900.hap2.fa)         -o output/alignment/self_assembly/minimap2/duplomap/mapped/900/900 --continue
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule duplomap_to_self:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/898.sorted.merged.bam, output/assembly/hifiasm/898/898.hap1.fa, output/assembly/hifiasm/898/898.hap2.fa
+    output: output/alignment/self_assembly/minimap2/duplomap/mapped/898/realigned.bam, output/alignment/self_assembly/minimap2/duplomap/mapped/898/psvs.vcf.gz
+    jobid: 30
+    reason: Missing output files: output/alignment/self_assembly/minimap2/duplomap/mapped/898/realigned.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/898.sorted.merged.bam
+    wildcards: mapper=minimap2, specimen=898
+    resources: tmpdir=/tmp
+
+
+        duplomap -@ 1         -i output/alignment/self_assembly/minimap2/standard/mapped/898.sorted.merged.bam output/assembly/hifiasm/898/898.hap1.fa output/assembly/hifiasm/898/898.hap2.fa -d /global/scratch/users/stacy-l/spermSV/config/packages/duplomap/hg38         -r <(cat output/assembly/hifiasm/898/898.hap1.fa output/assembly/hifiasm/898/898.hap2.fa)         -o output/alignment/self_assembly/minimap2/duplomap/mapped/898/898 --continue
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule duplomap_to_self:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/894.sorted.merged.bam, output/assembly/hifiasm/894/894.hap1.fa, output/assembly/hifiasm/894/894.hap2.fa
+    output: output/alignment/self_assembly/minimap2/duplomap/mapped/894/realigned.bam, output/alignment/self_assembly/minimap2/duplomap/mapped/894/psvs.vcf.gz
+    jobid: 45
+    reason: Missing output files: output/alignment/self_assembly/minimap2/duplomap/mapped/894/realigned.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/894.sorted.merged.bam
+    wildcards: mapper=minimap2, specimen=894
+    resources: tmpdir=/tmp
+
+
+        duplomap -@ 1         -i output/alignment/self_assembly/minimap2/standard/mapped/894.sorted.merged.bam output/assembly/hifiasm/894/894.hap1.fa output/assembly/hifiasm/894/894.hap2.fa -d /global/scratch/users/stacy-l/spermSV/config/packages/duplomap/hg38         -r <(cat output/assembly/hifiasm/894/894.hap1.fa output/assembly/hifiasm/894/894.hap2.fa)         -o output/alignment/self_assembly/minimap2/duplomap/mapped/894/894 --continue
+        
+
+[Thu Apr  4 09:53:20 2024]
+rule duplomap_to_self:
+    input: output/alignment/self_assembly/minimap2/standard/mapped/895.sorted.merged.bam, output/assembly/hifiasm/895/895.hap1.fa, output/assembly/hifiasm/895/895.hap2.fa
+    output: output/alignment/self_assembly/minimap2/duplomap/mapped/895/realigned.bam, output/alignment/self_assembly/minimap2/duplomap/mapped/895/psvs.vcf.gz
+    jobid: 60
+    reason: Missing output files: output/alignment/self_assembly/minimap2/duplomap/mapped/895/realigned.bam; Input files updated by another job: output/alignment/self_assembly/minimap2/standard/mapped/895.sorted.merged.bam
+    wildcards: mapper=minimap2, specimen=895
+    resources: tmpdir=/tmp
+
+
+        duplomap -@ 1         -i output/alignment/self_assembly/minimap2/standard/mapped/895.sorted.merged.bam output/assembly/hifiasm/895/895.hap1.fa output/assembly/hifiasm/895/895.hap2.fa -d /global/scratch/users/stacy-l/spermSV/config/packages/duplomap/hg38         -r <(cat output/assembly/hifiasm/895/895.hap1.fa output/assembly/hifiasm/895/895.hap2.fa)         -o output/alignment/self_assembly/minimap2/duplomap/mapped/895/895 --continue
+        
+Job stats:
+job                 count
+----------------  -------
+collate_bams            5
+duplomap_to_self        5
+gfaToFa                 4
+hifiasm                 2
+minimap2               10
+samtools_sort          10
+total                  36
+
+Reasons:
+    (check individual jobs above for details)
+    input files updated by another job:
+        collate_bams, duplomap_to_self, gfaToFa, samtools_sort
+    missing output files:
+        collate_bams, duplomap_to_self, minimap2, samtools_sort
+    software environment definition has changed since last execution:
+        hifiasm
+Some jobs were triggered by provenance information, see 'reason' section in the rule displays above.
+If you prefer that only modification time is used to determine whether a job shall be executed, use the command line option '--rerun-triggers mtime' (also see --help).
+If you are sure that a change for a certain output file (say, <outfile>) won't change the result (e.g. because you just changed the formatting of a script or environment definition), you can also wipe its metadata to skip such a trigger via 'snakemake --cleanup-metadata <outfile>'. 
+Rules with provenance triggered jobs: hifiasm
+
+
+This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.

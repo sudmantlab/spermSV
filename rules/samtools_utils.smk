@@ -7,7 +7,7 @@ rule samtools_sort:
     shell: "samtools sort -@ {threads} --output-fmt='BAM' -o {output} {input}"
 
 rule collate_bams:
-    input: get_bams_per_sample
+    input: get_temp_bams_per_sample
     output: "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam"
     threads: 20
     conda: "../envs/mapping.yml"

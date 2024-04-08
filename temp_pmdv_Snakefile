@@ -1,0 +1,40 @@
+import os
+import numpy as np
+import pandas as pd
+
+configfile: "config/snakemake/hg38.config.yml"
+workdir: config['workdir']
+
+# include helper functions
+include: "rules/common.smk"
+include: "rules/make_symlinks.smk"
+
+# preprocessing steps
+include: "rules/preprocessing.smk"
+
+# Mapping
+include: "rules/minimap2.smk"
+include: "rules/winnowmap.smk"
+include: "rules/duplomap.smk"
+include: "rules/samtools_utils.smk"
+include: "rules/coverage_stats.smk"
+
+# Variant calling
+include: "rules/sniffles.smk"
+include: "rules/pmdv.smk"
+include: "rules/straglr.smk"
+include: "rules/trgt.smk"
+
+# Simulations & Benchmarking
+include: "rules/spike_in.smk"
+include: "rules/spike_in_svtier1.smk"
+include: "rules/spike_in_cmrg.smk"
+include: "rules/in_silico_simulations.smk"
+
+# Annotation
+include: "rules/process_mosaic.smk"
+
+rule all:
+    input:
+        # pepper-margin-deepvariant calls; chrs is a list in common.smk
+        expand("output/alignment/hg38/{mapper}/{setting}/variants/pmdv/{specimen}/{region}/{specimen}.{region}.vcf.gz", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap'], specimen = specimens, region = chrs)

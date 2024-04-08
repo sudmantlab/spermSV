@@ -1,0 +1,10 @@
+name: singularity
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  # DeepVariant requires at least 3.8
+  - python=3.8
+  - samtools
+  - snakemake-minimal
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/singularity
