@@ -21,6 +21,8 @@ rule uBAMtoFastq:
         "data/PacBio-HiFi/{specimen}/{lane}/{smrtcell}.ccs.bam"
     output:
         temp("output/preprocessing/uBAMtoFastq/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz")
+    wildcard_constraints:
+        lane="[^placeholder_for_rahbari_data]"
     conda: "../envs/preprocessing.yml"
     threads: 10
     shell:
@@ -49,8 +51,9 @@ rule HiFiAdapterFilt:
     input: 
         "output/preprocessing/uBAMtoFastq/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz"
     output:
-        "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.fastq.gz",
-        "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.stats",
+        "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.fastq.gz"
+    wildcard_constraints:
+        lane="[^placeholder_for_rahbari_data]"
     log: "logs/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.log"
     params:
         # outDir = lambda wildcards, output: os.path.dirname(output[0]),

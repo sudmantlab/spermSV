@@ -27,13 +27,20 @@ def make_fastq_symlinks(wildcards):
 def get_temp_bams_per_sample(wildcards, sample_table = config['sample_table']) -> List[str]:
     """
     A helper function for creating a list of expected per-smrtcell bam outputs per sample to be merged into a single bam.
-    TODO: The base path should maybe be set in the configfile.
+    Adjusted to optionally include {hap} in the basepath if wildcards.hap exists.
     """
-    basepath = "output/alignment/{refalias}/{mapper}/standard/mapped/temp/{specimen}/{lane}/{specimen}_{smrtcell}.filt.sorted.bam"
     table = pd.read_table(sample_table, index_col=False, dtype=str)
     samples = table[table["specimen"] == str(wildcards.specimen)]
     samples = samples.to_records(index=False)
-    input_samples = [basepath.format(refalias=wildcards.refalias, mapper = wildcards.mapper, specimen=s[0], group = s[1], lane=s[2], smrtcell = s[3]) for s in samples]
+    
+    # Check if '{hap}' is in the basepath and format accordingly
+    if hasattr(wildcards, 'hap'):
+        basepath = "output/alignment/{refalias}/{mapper}/standard/mapped/temp/{specimen}.{hap}/{lane}/{specimen}_{smrtcell}.filt.sorted.bam"
+        input_samples = [basepath.format(refalias=wildcards.refalias, mapper=wildcards.mapper, specimen=s[0], hap=wildcards.hap, lane=s[2], smrtcell=s[3]) for s in samples]
+    else:
+        basepath = "output/alignment/{refalias}/{mapper}/standard/mapped/temp/{specimen}/{lane}/{specimen}_{smrtcell}.filt.sorted.bam"
+        input_samples = [basepath.format(refalias=wildcards.refalias, mapper=wildcards.mapper, specimen=s[0], lane=s[2], smrtcell=s[3]) for s in samples]
+    
     if len(input_samples) == 0:
         raise Exception("No samples found for specimen {}. Check samples.tsv and try again!".format(wildcards.specimen))
     else:

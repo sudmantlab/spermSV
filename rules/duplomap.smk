@@ -5,12 +5,9 @@ rule duplomap:
     output:
         "output/alignment/{refalias}/{mapper}/duplomap/mapped/{specimen}/realigned.bam",
         "output/alignment/{refalias}/{mapper}/duplomap/mapped/{specimen}/psvs.vcf.gz"
-    wildcard_constraints:
-        refalias=["hg38", "CHM13"]
     params:
         refgenome = config['reference']['fasta'].strip('.gz'),
         db = config['duplomap']['db'],
-        # outdir = "output/alignment/{refalias}/{mapper}/{setting}/duplomap"
         outdir = lambda wildcards, output: os.path.dirname(output[0]),
     conda:
         "../envs/mapping.yml"
@@ -20,7 +17,7 @@ rule duplomap:
         duplomap -@ {threads} \
         -i {input.bam} -d {params.db} \
         -r {params.refgenome} \
-        -o {params.outdir}/{wildcards.specimen} --continue
+        -o {params.outdir} --continue
         """
 
 rule duplomap_index:

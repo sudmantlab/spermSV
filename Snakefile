@@ -35,25 +35,32 @@ include: "rules/spike_in.smk"
 include: "rules/spike_in_svtier1.smk"
 include: "rules/spike_in_cmrg.smk"
 include: "rules/in_silico_simulations.smk"
+include: "rules/HG002_sim.smk"
+include: "rules/HG002_hg38_sim.smk"
+include: "rules/HG002_graphsim.smk"
+ruleorder: diploid_self_mapping > minimap2
 
 # Annotation
 include: "rules/process_mosaic.smk"
 
 rule all:
     input:
-        expand("output/assembly/hifiasm/{specimen}/{specimen}.asm.bp.{hap}.p_ctg.gfa", hap = ['hap1', 'hap2'], specimen = specimens),
-        expand("output/assembly/hifiasm/{specimen}/{specimen}.{hap}.fa", specimen = specimens, hap = ['hap1', 'hap2'])
-        # tandem repeat genotyping
-        # expand('output/alignment/hg38/winnowmap/standard/variants/trgt/repeat_catalog/{specimen}.sorted.vcf.gz',  specimen = specimens),
-        # expand('output/alignment/hg38/winnowmap/standard/variants/trgt/pathogenic/{specimen}.sorted.vcf.gz',  specimen = specimens),
-        # alu analysis pipeline rebuild
-        # expand("analysis/hg38/denovo/files/{mapper}/{setting}/variants/all.filt.gff", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap']),
-        # expand("analysis/hg38/denovo/files/{mapper}/{setting}/variants/all.overlap_repetitive.gff", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap']),
-        # expand("analysis/hg38/denovo/files/{mapper}/{setting}/variants/all.annotate_{source}.gff", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap'], source = ['repeatMasker', 'simpleRepeat', 'genomicSuperDups', 'centromeres', 'microsat']),
-        # expand("analysis/hg38/denovo/files/{mapper}/{setting}/variants/all.annotate_{database}.gff", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap'], database = ['gencode', 'refseq']),
-        # expand("analysis/hg38/denovo/files/{mapper}/{setting}/repeatmasker/all.filt.alt.fa", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap']),
-        # expand("analysis/hg38/denovo/files/{mapper}/{setting}/variants/all.annotate_repeatmasker.tsv", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap']),
-        # edit distance calcs
-        # expand("analysis/hg38/denovo/files/{mapper}/{setting}/variants/{specimen}.annotate_edit_distance.tsv", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap'], specimen = specimens),
-        # pepper-margin-deepvariant calls; chrs is a list in common.smk
-        # expand("output/alignment/hg38/{mapper}/{setting}/variants/pmdv/{specimen}/{region}/{specimen}.{region}.vcf.gz", mapper = ['minimap2', 'winnowmap'], setting = ['standard', 'duplomap'], specimen = specimens, region = chrs)
+        # expand("output/alignment/HG002/minimap2/standard/mapped/self/{hap2}/{hap1}_to_{hap2}.coverage.txt", hap1 = ["PATERNAL", "MATERNAL"], hap2 = ["PATERNAL", "MATERNAL"]),
+        # # expand("output/alignment/HG002/minimap2/standard/mapped/reports/gatk/1.0_{hap1}_SVs_to_{hap2}", zip, hap1 = ['PATERNAL', 'MATERNAL'], hap2 = ['MATERNAL', 'PATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap2}/{hap1}_to_{hap2}.vcf.gz", hap1 = ["PATERNAL", "MATERNAL"], hap2 = ["PATERNAL", "MATERNAL"]),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/germline/{hap1}_to_{hap2}/summary.json", hap1 = ['PATERNAL', 'MATERNAL'], hap2 = ['MATERNAL', 'PATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/germline/1.0_{hap1}_SVs_to_{hap2}/summary.json", hap1 = ['PATERNAL', 'MATERNAL'], hap2 = ['MATERNAL', 'PATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/mosaic/{spike}_{hap1}_SVs_to_{hap2}/summary.json", spike = ['0.3', '0.2', '0.18', '0.15', '0.12', '0.1', '0.08', '0.05', '0.03', '0.01'], hap1 = ['PATERNAL', 'MATERNAL'], hap2 = ['PATERNAL', 'MATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/germline/{spike}_{hap1}_SVs_to_{hap2}/summary.json", spike = ['0.3', '0.2', '0.18', '0.15', '0.12', '0.1', '0.08', '0.05', '0.03', '0.01'], hap1 = ['PATERNAL', 'MATERNAL'], hap2 = ['PATERNAL', 'MATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/germline/{hap1}_to_{hap2}/{files}.jl", files = ['tp-base', 'fp', 'fn'], hap1 = ['PATERNAL', 'MATERNAL'], hap2 = ['MATERNAL', 'PATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/germline/1.0_{hap1}_SVs_to_{hap2}/{files}.jl", files = ['tp-base', 'fp', 'fn'], hap1 = ['PATERNAL', 'MATERNAL'], hap2 = ['MATERNAL', 'PATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/mosaic/{spike}_{hap1}_SVs_to_{hap2}/{files}.jl", files = ['tp-base', 'fp', 'fn'], spike = ['0.3', '0.2', '0.18', '0.15', '0.12', '0.1', '0.08', '0.05', '0.03', '0.01'], hap1 = ['PATERNAL', 'MATERNAL'], hap2 = ['PATERNAL', 'MATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/germline/{spike}_{hap1}_SVs_to_{hap2}/{files}.jl", files = ['tp-base', 'fp', 'fn'], spike = ['0.3', '0.2', '0.18', '0.15', '0.12', '0.1', '0.08', '0.05', '0.03', '0.01'], hap1 = ['PATERNAL', 'MATERNAL'], hap2 = ['PATERNAL', 'MATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/germline/1.0_{hap1}_SVs_to_{hap2}/annotated/{files}.trf.jl", files = ['tp-base', 'fp', 'fn'], hap1 = ['PATERNAL', 'MATERNAL'], hap2 = ['MATERNAL', 'PATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/mosaic/{spike}_{hap1}_SVs_to_{hap2}/annotated/{files}.trf.jl", files = ['tp-base', 'fp', 'fn'], spike = ['0.3', '0.2', '0.18', '0.15', '0.12', '0.1', '0.08', '0.05', '0.03', '0.01'], hap1 = ['PATERNAL', 'MATERNAL'], hap2 = ['PATERNAL', 'MATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/germline/{spike}_{hap1}_SVs_to_{hap2}/annotated/{files}.trf.jl", files = ['tp-base', 'fp', 'fn'], spike = ['0.3', '0.2', '0.18', '0.15', '0.12', '0.1', '0.08', '0.05', '0.03', '0.01'], hap1 = ['PATERNAL', 'MATERNAL'], hap2 = ['PATERNAL', 'MATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/germline/{hap1}_to_{hap2}/annotated/{files}.trf.jl", files = ['tp-base', 'fp', 'fn'], hap1 = ['PATERNAL', 'MATERNAL'], hap2 = ['MATERNAL', 'PATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap2}/annotated/{hap1}_to_{hap2}.trf.jl", hap1 = ["PATERNAL", "MATERNAL"], hap2 = ["PATERNAL", "MATERNAL"]),
+        # new stuff for new variant spike implementation
+        expand("output/alignment/HG002/minimap2/standard/variants/sniffles_standard/hg38/{hap}.jl", hap = ['MATERNAL', 'PATERNAL']),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{hap}/germline/{hap}/{set}/summary.json", hap = ['MATERNAL', 'PATERNAL'], set = ['all', 'sub10kB'])

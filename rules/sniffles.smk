@@ -6,6 +6,8 @@ rule sniffles_standard:
         vcf='output/alignment/{refalias}/{mapper}/standard/variants/sniffles_standard/{specimen}.vcf.gz',
         snf='output/alignment/{refalias}/{mapper}/standard/variants/sniffles_standard/{specimen}.snf',
         tbi='output/alignment/{refalias}/{mapper}/standard/variants/sniffles_standard/{specimen}.vcf.gz.tbi'
+    wildcard_constraints:
+        specimen = '[A-Za-z0-9]+'
     conda:
         '../envs/sniffles.yml'
     threads:
@@ -18,8 +20,6 @@ rule sniffles_standard:
         mapq = config['sniffles']['mapq'],
     log:
         "logs/alignment/{refalias}/{mapper}/standard/variants/sniffles_standard/{specimen}.log"
-    benchmark:
-        "logs/alignment/{refalias}/{mapper}/standard/variants/sniffles_standard/{specimen}.bench.log"
     shell:
         """
         sniffles --input {input.bam} \
@@ -43,6 +43,8 @@ rule sniffles_mosaic:
         vcf='output/alignment/{refalias}/{mapper}/standard/variants/sniffles_mosaic/{specimen}.vcf.gz',
         snf='output/alignment/{refalias}/{mapper}/standard/variants/sniffles_mosaic/{specimen}.snf',
         tbi='output/alignment/{refalias}/{mapper}/standard/variants/sniffles_mosaic/{specimen}.vcf.gz.tbi'
+    wildcard_constraints:
+        specimen = '[A-Za-z0-9]+'
     conda:
         '../envs/sniffles.yml'
     threads:
@@ -59,8 +61,6 @@ rule sniffles_mosaic:
         mosaic_qc_strand = config['sniffles']['mosaic-qc-strand']
     log:
         "logs/alignment/{refalias}/{mapper}/standard/variants/sniffles_mosaic/{specimen}.log"
-    benchmark:
-        "logs/alignment/{refalias}/{mapper}/standard/variants/sniffles_mosaic/{specimen}.bench.log"
     shell:
         """
         sniffles --input {input.bam} \
@@ -77,15 +77,54 @@ rule sniffles_mosaic:
         --mosaic-qc-strand={params.mosaic_qc_strand} &> {log}
         """
 
+rule sniffles_mosaic_self_assembly:
+    """
+    The same rule as sniffles_mosaic, except it doesn't use a tandem repeat annotation file (only compatible with hg38).
+    """
+    input:
+        bam = "output/alignment/self_assembly/{mapper}/standard/mapped/{specimen}.sorted.merged.bam",
+        index = "output/alignment/self_assembly/{mapper}/standard/mapped/{specimen}.sorted.merged.bam.bai"
+    output:
+        vcf='output/alignment/self_assembly/{mapper}/standard/variants/sniffles_mosaic/{specimen}.vcf.gz',
+        snf='output/alignment/self_assembly/{mapper}/standard/variants/sniffles_mosaic/{specimen}.snf',
+        tbi='output/alignment/self_assembly/{mapper}/standard/variants/sniffles_mosaic/{specimen}.vcf.gz.tbi'
+    conda:
+        '../envs/sniffles.yml'
+    threads:
+        10
+    resources:
+        mem_mb=60000
+    params:
+        refgenome = config['reference']['fasta'],
+        minsupport = config['sniffles']['minsupport'],
+        mapq = config['sniffles']['mapq'],
+        mosaic_af_min = config['sniffles']['mosaic-af-min'],
+        mosaic_af_max = config['sniffles']['mosaic-af-max'],
+        mosaic_qc_strand = config['sniffles']['mosaic-qc-strand']
+    log:
+        "logs/alignment/self_assembly/{mapper}/standard/variants/sniffles_mosaic/{specimen}.log"
+    shell:
+        """
+        sniffles --input {input.bam} \
+        --vcf {output.vcf} \
+        --snf {output.snf} \
+        --reference {params.refgenome} \
+        --threads {threads} --mosaic \
+        --minsupport {params.minsupport} \
+        --mapq {params.mapq} \
+        --output-rnames \
+        --mosaic-af-min {params.mosaic_af_min} \
+        --mosaic-af-max {params.mosaic_af_max} \
+        --mosaic-qc-strand={params.mosaic_qc_strand} &> {log}
+        """
+
 use rule sniffles_mosaic as sniffles_mosaic_duplomap with:
     input:
-        bam = "output/alignment/{refalias}/{mapper}/duplomap/{specimen}/realigned.bam",
-        index = "output/alignment/{refalias}/{mapper}/duplomap/{specimen}/realigned.bam.bai"
+        bam = "output/alignment/{refalias}/{mapper}/duplomap/mapped/{specimen}/realigned.bam",
+        index = "output/alignment/{refalias}/{mapper}/duplomap/mapped/{specimen}/realigned.bam.bai"
     output:
         vcf='output/alignment/{refalias}/{mapper}/duplomap/variants/sniffles_mosaic/{specimen}.vcf.gz',
         snf='output/alignment/{refalias}/{mapper}/duplomap/variants/sniffles_mosaic/{specimen}.snf',
         tbi='output/alignment/{refalias}/{mapper}/duplomap/variants/sniffles_mosaic/{specimen}.vcf.gz.tbi'
     log:
         "logs/alignment/{refalias}/{mapper}/duplomap/variants/sniffles_mosaic/{specimen}.log"
-    benchmark:
-        "logs/alignment/{refalias}/{mapper}/duplomap/variants/sniffles_mosaic/{specimen}.bench.log"

@@ -1,39 +1,62 @@
 rule samtools_sort:
+    # TODO: Just change all files that have the .filt.sorted suffixes and just Not Do That
     input: "output/alignment/{refalias}/{mapper}/standard/mapped/temp/{specimen}/{lane}/{smrtcell}.filt.bam"
     output: 
         temp("output/alignment/{refalias}/{mapper}/standard/mapped/temp/{specimen}/{lane}/{specimen}_{smrtcell}.filt.sorted.bam")
-    threads: 20
+    wildcard_constraints:
+        specimen = '[A-Za-z0-9]+'
+    threads: 10
+    conda: "../envs/mapping.yml"
+    shell: "samtools sort -@ {threads} --output-fmt='BAM' -o {output} {input}"
+
+rule samtools_haploid_sort:
+    input: "output/alignment/self_assembly/{mapper}/standard/mapped/temp/{specimen}.{hap}/{lane}/{smrtcell}.filt.bam"
+    output: 
+        temp("output/alignment/self_assembly/{mapper}/standard/mapped/temp/{specimen}.{hap}/{lane}/{specimen}_{smrtcell}.filt.sorted.bam")
+    wildcard_constraints:
+        specimen = '[A-Za-z0-9]+',
+        hap = '[A-Za-z0-9]+'
+    threads: 10
     conda: "../envs/mapping.yml"
     shell: "samtools sort -@ {threads} --output-fmt='BAM' -o {output} {input}"
 
 rule collate_bams:
     input: get_temp_bams_per_sample
+    wildcard_constraints:
+        specimen = '[A-Za-z0-9]+'
     output: "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam"
-    threads: 20
+    threads: 10
     conda: "../envs/mapping.yml"
     shell: "samtools merge -r -@ {threads} --output-fmt='BAM' {output} {input}"
 
-# rule replace_RG:
-#     # Creates a more informative read group for the merged BAM files.
-#     # Creates a new file and index.
-#     # In the future, add a renaming operation to have {specimen}.{smrtcell}.filt.sorted.bam as the output of samtools sort.
-#     # This will yield an RG tag that maintains specimen name and smrtcell name in the ID of RG post-merge.
-#     input: "output/alignment/{refalias}/{mapper}/{setting}/mapped/{specimen}.sorted.merged.bam"
-#     output: "output/alignment/{refalias}/{mapper}/{setting}/mapped/{specimen}.sorted.merged.renamed.bam"
-#     threads: 20
-#     conda: "../envs/mapping.yml"
-#     params:
-#         readgroup = config['samtools']['readgroup']
-#     shell:
-#         """
-#         samtools addreplacerg -@ {threads} -r {params.readgroup} {input} -o {output}
-#         samtools index -b {output} -@ {threads}
-#         """
+rule collate_haploid_bams:
+    input: get_temp_bams_per_sample
+    wildcard_constraints:
+        specimen = '[A-Za-z0-9]+'
+    output: "output/alignment/self_assembly/{mapper}/standard/mapped/{specimen}.{hap}.sorted.merged.bam"
+    threads: 10
+    conda: "../envs/mapping.yml"
+    shell: "samtools merge -r -@ {threads} --output-fmt='BAM' {output} {input}"
 
 rule index_bam:
     input: "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam"
     output: "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam.bai"
-    threads: 20
+    wildcard_constraints:
+        specimen = '[A-Za-z0-9]+'
+    threads: 10
+    conda: "../envs/mapping.yml"
+    shell: 
+        """
+        samtools index -b {input} -@ {threads}
+        """
+
+rule index_haploid_bam:
+    input: "output/alignment/self_assembly/{mapper}/standard/mapped/{specimen}.{hap}.sorted.merged.bam"
+    output: "output/alignment/self_assembly/{mapper}/standard/mapped/{specimen}.{hap}.sorted.merged.bam.bai"
+    wildcard_constraints:
+        specimen = '[A-Za-z0-9]+',
+        hap = '[A-Za-z0-9]+'
+    threads: 10
     conda: "../envs/mapping.yml"
     shell: 
         """

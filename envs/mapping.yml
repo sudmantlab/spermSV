@@ -10,5 +10,6 @@ dependencies:
   # requires samtools + htslib >= 1.11 for uBAM preproc
   - samtools>=1.11
   - htslib>=1.11
+  - seqtk==1.4
   - snakemake-minimal
 prefix: /global/scratch/users/stacy-l/miniconda3/envs/mapping

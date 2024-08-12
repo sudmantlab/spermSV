@@ -1,0 +1,12 @@
+name: assembly_qc
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - ragtag
+  - fastqc
+  - multiqc
+  - quast
+  - merqury
+  - yak
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/assembly_qc

@@ -25,8 +25,9 @@ paths:
     pathogenic: "/global/scratch/users/stacy-l/spermSV/code/trgt/repeats/pathogenic_repeats.hg38.bed"
   sim-it:
     repo: "/global/scratch/users/stacy-l/spermSV/code/Sim-it"
-  
-###############################
+  sequenceTubeMap:
+    scripts: "/global/scratch/users/stacy-l/spermSV/code/sequenceTubeMap/scripts"
+
 ### Analysis config options ###
 ###############################
 
@@ -36,6 +37,7 @@ paths:
 
 reference:
   fasta: "/global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa.gz"
+  fasta_uncompressed: "/global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa"
   alias: "hg38"
   annotations:
     repeats: "/global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_simpleRepeat.bed"

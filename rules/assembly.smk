@@ -34,10 +34,97 @@ rule hifiasm:
 rule gfaToFa:
     input: "output/assembly/hifiasm/{specimen}/{specimen}.asm.bp.{hap}.p_ctg.gfa"
     output: "output/assembly/hifiasm/{specimen}/{specimen}.{hap}.fa"
-    wildcard_constraints:
-        hap = ['hap1', 'hap2']
     log: "logs/assembly/hifiasm/{specimen}/{specimen}.{hap}.fa.log"
     conda: "../envs/HiFiAssembly.yml"
     shell: 
         "gfatools gfa2fa {input} > {output} 2> {log}"
 
+rule quast_raw:
+    input:
+        "output/assembly/hifiasm/{specimen}/{specimen}.hap1.fa",
+        "output/assembly/hifiasm/{specimen}/{specimen}.hap2.fa"
+    output:
+        "output/assembly/hifiasm/{specimen}/quast/raw/report.html"
+    conda:
+        "../envs/assembly_qc.yml"
+    threads: 10
+    params:
+        refgenome = config['reference']['fasta'],
+        outdir = "output/assembly/hifiasm/{specimen}/quast/raw"
+    shell:
+        """
+        quast.py {input} -r {params.refgenome} \
+        -o {params.outdir} \
+        --large --no-icarus --fragmented
+        """
+
+rule ragtag_scaffold:
+    input:
+        "output/assembly/hifiasm/{specimen}/{specimen}.{hap}.fa"
+    output:
+        expand("output/assembly/hifiasm/{specimen}/{specimen}.{hap}.scaffold.{ext}", allow_missing = True, ext = ["agp", "stats", "asm.paf", "asm.paf.log", "confidence.txt", "err"]),
+        temp("output/assembly/hifiasm/{specimen}/{specimen}.{hap}.scaffold.temp.fasta")
+    conda:
+        "../envs/assembly_qc.yml"
+    threads: 10
+    params:
+        refgenome = config['reference']['fasta'],
+        outdir = "output/assembly/hifiasm/{specimen}/scaffolded/{hap}"
+    shell:
+        """
+        mkdir -p {params.outdir}
+        ragtag.py scaffold {params.refgenome} {input} \
+        -u --mm2-params='-t {threads} -x asm5 --eqx --cs' \
+        -o {params.outdir}
+
+        for file in {params.outdir}/ragtag.scaffold.*; do
+            new_name="${{file/ragtag.scaffold/{wildcards.specimen}.{wildcards.hap}}}"
+            mv "$file" "${{new_name/scaffolded\/{wildcards.hap}\//}}"
+        done
+        """
+
+rule rename_scaffolded_ctgs:
+    input:
+        "output/assembly/hifiasm/{specimen}/{specimen}.{hap}.scaffold.temp.fasta"
+    output:
+        "output/assembly/hifiasm/{specimen}/{specimen}.{hap}.scaffold.fasta"
+    shell:
+        """
+        sed 's/>\(.*\)_RagTag/>\\1_RagTag_{wildcards.hap}/' {input} > {output}
+        """
+
+use rule quast_raw as quast_scaffolded with:
+    input:
+        "output/assembly/hifiasm/{specimen}/{specimen}.hap1.scaffold.fasta",
+        "output/assembly/hifiasm/{specimen}/{specimen}.hap2.scaffold.fasta"
+    output:
+        "output/assembly/hifiasm/{specimen}/quast/scaffolded/report.html"
+    conda:
+        "../envs/assembly_qc.yml"
+    threads: 10
+    params:
+        refgenome = config['reference']['fasta'],
+        outdir = "output/assembly/hifiasm/{specimen}/quast/scaffolded"
+
+rule minigraph_cactus_pangenome:
+    # Need to run snakemake with --use-singularity --singularity-args "--fakeroot --writable-tmpfs"
+    # Figure this out later
+    input:
+        config = "config/packages/minigraph-cactus/samples.txt"
+    output:
+        "output/assembly/minigraph-cactus/svg.vcf.gz",
+        expand("output/assembly/minigraph-cactus/chrom-alignments/{chr}.vg", chr = chrs)
+    container:
+        "code/cactus/cactus_v2.8.1.sif"
+    threads: 40
+    shell:
+        """
+        cactus-pangenome ./js \
+        {input.config} \
+        --outDir output/assembly/minigraph-cactus \
+        --outName svg \
+        --reference CHM13 hg38 \
+        --vcfReference CHM13 hg38 \
+        --refContigs $(for i in $(seq 22); do printf "chr$i "; done ; echo "chrX chrY chrM") \
+        --vcf --giraffe --gfa --gbz --vg
+        """
