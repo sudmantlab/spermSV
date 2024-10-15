@@ -37,25 +37,36 @@ include: "rules/spike_in_svtier1.smk"
 include: "rules/spike_in_cmrg.smk"
 include: "rules/in_silico_simulations.smk"
 include: "rules/HG002_sim.smk"
-include: "rules/HG002_hg38_sim.smk"
+# include: "rules/HG002_hg38_sim.smk"
 include: "rules/HG002_graphsim.smk"
 
-ruleorder: diploid_self_mapping > minimap2
-ruleorder: get_unambiguous_hap_bam > generic_sort
-ruleorder: get_unambiguous_hap_bam_hg38 > generic_sort
+ruleorder: T2T_self_mapping > minimap2
+ruleorder: disambiguate_T2T_self_mapped > generic_sort
+ruleorder: disambiguate_hg38_remapped > generic_sort
 
 # Annotation
 include: "rules/process_mosaic.smk"
 
 rule all:
     input:
-        expand("output/alignment/HG002/minimap2/standard/mapped/self/diploid/unambiguous_{hap}.fastq.gz", hap=["PATERNAL", "MATERNAL"]),
-        expand("output/alignment/HG002/minimap2/standard/variants/extracted_vars/{hap}/{chr}", hap=["PATERNAL", "MATERNAL"], chr = chrs),
-        expand("output/alignment/HG002/minimap2/standard/mapped/self/{hap2}/{n}_{hap1}_to_{hap2}.bam", hap1 = ["PATERNAL", "MATERNAL"], hap2 = ["PATERNAL", "MATERNAL"], n = [str(i) for i in range(1, 11)]),
-        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/mosaic/{n}_{hap1}_to_{hap2}/log.txt", hap1 = ["PATERNAL", "MATERNAL"], hap2 = ["PATERNAL", "MATERNAL"],n = [str(i) for i in range(1, 11)]),
-        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/mosaic/{n}_{hap1}_to_{hap2}/spiked_consistency.json", hap1 = ["PATERNAL", "MATERNAL"], hap2 = ["PATERNAL", "MATERNAL"],n = [str(i) for i in range(1, 11)]),
-        expand("output/alignment/HG002/minimap2/standard/variants/sniffles_mosaic/self/{hap2}/annotated/merged_{n}_{hap1}_to_{hap2}.trf.check_multi_hap_SVs.json", hap1 = ["PATERNAL", "MATERNAL"], hap2 = ["PATERNAL", "MATERNAL"],n = [str(i) for i in range(1, 11)]),
-        # germline
-        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/standard/{n}_{hap1}_to_{hap2}/log.txt", hap1 = ["PATERNAL", "MATERNAL"], hap2 = ["PATERNAL", "MATERNAL"],n = [str(i) for i in range(1, 11)]),
-        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/standard/{n}_{hap1}_to_{hap2}/spiked_consistency.json", hap1 = ["PATERNAL", "MATERNAL"], hap2 = ["PATERNAL", "MATERNAL"],n = [str(i) for i in range(1, 11)]),
-        expand("output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap2}/annotated/merged_{n}_{hap1}_to_{hap2}.trf.check_multi_hap_SVs.json", hap1 = ["PATERNAL", "MATERNAL"], hap2 = ["PATERNAL", "MATERNAL"],n = [str(i) for i in range(1, 11)])
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap}_benchmark/{file}/{output}", 
+        benchmark = ["dipcall", "CMRG"], hap = ["PATERNAL", "MATERNAL"], file = ["unphased", "homozygous","all_PATERNAL", "all_MATERNAL", "unambiguous_PATERNAL", "unambiguous_MATERNAL"], output = ["log.txt", "tp-comp.vcf.gz"]),
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{benchmark}_{hap}_benchmark/{file}/{output}", 
+        benchmark = ["CMRG"], hap = ["PATERNAL", "MATERNAL"], file = ["unphased", "homozygous","all_PATERNAL", "all_MATERNAL", "unambiguous_PATERNAL", "unambiguous_MATERNAL"], output = ["log.txt", "tp-comp.vcf.gz"]),
+        expand("output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_mosaic/CMRG_{hap1}_benchmark/{hap1}_spike_to_{hap2}/1_{hap1}_spike_to_{hap2}/log.txt",
+        benchmark = ["CMRG"], hap1 = ["PATERNAL", "MATERNAL"], hap2 = ["PATERNAL", "MATERNAL"]),
+        # # benchmarks here
+        # expand("benchmarks/HG002/liftover/HG002_GRCh38_CMRG_SV_v1.00.to_HG002_{hap}.{ext}", hap = ["PATERNAL", "MATERNAL"], ext = ["vcf.gz", "bed"]),
+        # expand("benchmarks/HG002/liftover/{hap1}_HG002_GRCh38_CMRG_SV_v1.00.to_HG002_{hap2}.{ext}", hap1 = ["PATERNAL", "MATERNAL"], hap2 = ["PATERNAL", "MATERNAL"], ext = ["vcf.gz"]),
+        # # this one appears to fail due to a "malformed allele? see logs. this is why there's no dipcall simulations rn
+        # # expand("benchmarks/HG002/liftover/GRCh38_HG2-T2TQ100-V1.0.to_HG002_{hap}.{ext}", hap = ["PATERNAL", "MATERNAL"], ext = ["vcf.gz"]),
+        # # expand("benchmarks/HG002/liftover/GRCh38_HG2-T2TQ100-V1.0_stvar.benchmark.to_HG002_{hap}.bed", hap = ["PATERNAL", "MATERNAL"]),
+        # # expand("benchmarks/HG002/liftover/{hap1}_GRCh38_HG2-T2TQ100-V1.0.to_HG002_{hap2}.{ext}", hap1 = ["PATERNAL", "MATERNAL"], hap2 = ["PATERNAL", "MATERNAL"], ext = ["vcf.gz"])
+
+# obtain rulegraph with:
+# snakemake --rulegraph \
+# output/alignment/HG002/minimap2/standard/variants/sniffles_standard/hg38/MATERNAL.vcf.gz \
+# output/alignment/HG002/minimap2/standard/variants/truvari/hg38/MATERNAL/standard/all/tp-comp.vcf.gz \
+# output/alignment/HG002/minimap2/standard/variants/truvari/hg38/PATERNAL/standard/all/tp-comp.vcf.gz \
+# output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/PATERNAL/annotated/merged_1_MATERNAL_spike_to_PATERNAL.trf.check_multi_hap_SVs.report \
+# | dot -Tpng > simulation_rulegraph.png
