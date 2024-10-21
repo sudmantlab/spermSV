@@ -49,54 +49,6 @@ rule vcf2df:
         truvari vcf2df --info --format {input} {output}
         """
 
-rule diploid_assembly_coverage:
-    input:
-        bams = expand("output/alignment/HG002/minimap2/standard/mapped/self/diploid/all_{hap}.bam", hap = ['MATERNAL', 'PATERNAL', 'HG002.sorted.merged']),
-        indices = expand("output/alignment/HG002/minimap2/standard/mapped/self/diploid/all_{hap}.bam.bai", hap = ['MATERNAL', 'PATERNAL', 'HG002.sorted.merged'])
-    output:
-        "output/alignment/HG002/minimap2/standard/mapped/self/diploid/coverage.html"
-    conda: "../envs/deeptools.yml"
-    threads: 20
-    params:
-        format = "plotly",
-        title = "'Phased read alignment coverage to diploid assembly'"
-    shell:
-        """
-        plotCoverage -p {threads} --bamfiles {input.bams} --plotFile {output} --plotFileFormat {params.format} -n 1000000 --plotTitle {params.title} --ignoreDuplicates --minMappingQuality 10 
-        """
-
-rule self_assembly_coverage:
-    input:
-        hap_bams = expand("output/alignment/HG002/minimap2/standard/mapped/self/{hap2}/{hap1}_to_{hap2}.bam", allow_missing = True, hap1 = ['MATERNAL', 'PATERNAL']),
-        sv_bams = expand("output/alignment/HG002/minimap2/standard/mapped/self/{hap2}/merged/1.0_{hap1}_SVs_to_{hap2}.bam", allow_missing = True, hap1 = ['MATERNAL', 'PATERNAL']),
-        hap_indices = expand("output/alignment/HG002/minimap2/standard/mapped/self/{hap2}/{hap1}_to_{hap2}.bam.bai", allow_missing = True, hap1 = ['MATERNAL', 'PATERNAL']),
-        sv_indices = expand("output/alignment/HG002/minimap2/standard/mapped/self/{hap2}/merged/1.0_{hap1}_SVs_to_{hap2}.bam.bai", allow_missing = True, hap1 = ['MATERNAL', 'PATERNAL']),
-    output:
-        "output/alignment/HG002/minimap2/standard/mapped/self/{hap2}/coverage.html"
-    conda: "../envs/deeptools.yml"
-    threads: 20
-    params:
-        format = "plotly",
-        title = "'Phased read alignment coverage to self-assembly'"
-    shell:
-        """
-        plotCoverage -p {threads} --bamfiles {input.hap_bams} {input.sv_bams} --plotFile {output} --plotFileFormat {params.format} -n 1000000 --plotTitle {params.title} --ignoreDuplicates --minMappingQuality 10 
-        """
-
-use rule self_assembly_coverage as hg38_remapped_coverage with:
-    input:
-        hap_bams = expand("output/alignment/HG002/minimap2/standard/mapped/hg38/{hap}.bam", hap = ['MATERNAL', 'PATERNAL']),
-        sv_bams = expand("output/alignment/HG002/minimap2/standard/mapped/hg38/{hap}_SVs.bam", hap = ['MATERNAL', 'PATERNAL']),
-        hap_indices = expand("output/alignment/HG002/minimap2/standard/mapped/hg38/{hap}.bam.bai", hap = ['MATERNAL', 'PATERNAL']),
-        sv_indices = expand("output/alignment/HG002/minimap2/standard/mapped/hg38/{hap}_SVs.bam.bai", hap = ['MATERNAL', 'PATERNAL'])
-    output:
-        "output/alignment/HG002/minimap2/standard/mapped/hg38/coverage.html"
-    conda: "../envs/deeptools.yml"
-    threads: 20
-    params:
-        format = "plotly",
-        title = "'Phased read alignment coverage to hg38'"
-
 # Section 2: Read phasing
 
 rule split_T2T_HG002:
@@ -188,6 +140,8 @@ rule filter_dipcall_benchmark_SVs:
     input:
         vcf = 'benchmarks/HG002/GRCh38_HG2-T2TQ100-V1.0.vcf.gz'
     output:
+        unphased = "benchmarks/HG002/unphased_GRCh38_HG2-T2TQ100-V1.0.vcf.gz",
+        unphased_index = "benchmarks/HG002/unphased_GRCh38_HG2-T2TQ100-V1.0.vcf.gz.tbi",
         maternal = "benchmarks/HG002/MATERNAL_GRCh38_HG2-T2TQ100-V1.0.vcf.gz",
         maternal_index = "benchmarks/HG002/MATERNAL_GRCh38_HG2-T2TQ100-V1.0.vcf.gz.tbi",
         paternal = "benchmarks/HG002/PATERNAL_GRCh38_HG2-T2TQ100-V1.0.vcf.gz",
@@ -200,6 +154,9 @@ rule filter_dipcall_benchmark_SVs:
     shell:
         """
         mkdir -p {params.outdir}
+        # Get "unphased" callset (no filter on phase)
+        bcftools filter -i 'SVTYPE!="BND" & SVTYPE!="INV" & INFO/SVLEN >= 50' {input.vcf} -o {output.unphased} -O z9
+        tabix {output.unphased}
 
         # Get maternal callset
         bcftools filter -i 'SVTYPE!="BND" & SVTYPE!="INV" & INFO/SVLEN >= 50 & GT=="0|1"' {input.vcf} -o {output.maternal} -O z9
@@ -219,6 +176,8 @@ use rule filter_dipcall_benchmark_SVs as filter_CMRG_benchmark_SVs with:
     input:
         vcf = "benchmarks/HG002/GRCh38_HG2-T2TQ100-V1.0.vcf.gz"
     output:
+        unphased = "benchmarks/HG002/unphased_HG002_GRCh38_CMRG_SV_v1.00.vcf.gz",
+        unphased_index = "benchmarks/HG002/unphased_HG002_GRCh38_CMRG_SV_v1.00.vcf.gz.tbi",
         maternal = "benchmarks/HG002/MATERNAL_HG002_GRCh38_CMRG_SV_v1.00.vcf.gz",
         maternal_index = "benchmarks/HG002/MATERNAL_HG002_GRCh38_CMRG_SV_v1.00.vcf.gz.tbi",
         paternal = "benchmarks/HG002/PATERNAL_HG002_GRCh38_CMRG_SV_v1.00.vcf.gz",
@@ -354,6 +313,36 @@ use rule sniffles_standard as hg38_unphased_standard_call with:
     log:
         "logs/alignment/HG002/minimap2/standard/variants/sniffles_standard/hg38/unphased.log"
 
+rule T2T_unphased_standard_call:
+    input:
+        bam = "output/alignment/HG002/minimap2/standard/mapped/self/diploid/unphased.bam",
+        bai = "output/alignment/HG002/minimap2/standard/mapped/self/diploid/unphased.bam.bai"
+    output:
+        vcf='output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unphased.vcf.gz',
+        snf='output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unphased.snf',
+        tbi='output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unphased.vcf.gz.tbi'
+    conda:
+        '../envs/sniffles.yml'
+    threads:
+        5
+    resources:
+        mem_mb=60000
+    params:
+        refgenome = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1.fasta.gz",
+        mapq = config['sniffles']['mapq'],
+    log:
+        "logs/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unphased.log"
+    shell:
+        """
+        sniffles --input {input.bam} \
+        --vcf {output.vcf} \
+        --snf {output.snf} \
+        --reference {params.refgenome} \
+        --threads {threads} \
+        --mapq {params.mapq} \
+        --output-rnames &> {log}
+        """
+
 use rule sniffles_standard as hg38_homozygous_standard_call with:
     input:
         bam = "output/alignment/HG002/minimap2/standard/mapped/hg38/homozygous.bam",
@@ -374,6 +363,26 @@ use rule sniffles_standard as hg38_homozygous_standard_call with:
         mapq = config['sniffles']['mapq'],
     log:
         "logs/alignment/HG002/minimap2/standard/variants/sniffles_standard/hg38/homozygous.log"
+
+use rule T2T_unphased_standard_call as T2T_homozygous_standard_call with:
+    input:
+        bam = "output/alignment/HG002/minimap2/standard/mapped/self/{hap}/homozygous.bam",
+        bai = "output/alignment/HG002/minimap2/standard/mapped/self/{hap}/homozygous.bam.bai"
+    output:
+        vcf='output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap}/homozygous.vcf.gz',
+        snf='output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap}/homozygous.snf',
+        tbi='output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap}/homozygous.vcf.gz.tbi'
+    conda:
+        '../envs/sniffles.yml'
+    threads:
+        5
+    resources:
+        mem_mb=60000
+    params:
+        refgenome = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1.fasta.gz",
+        mapq = config['sniffles']['mapq'],
+    log:
+        "logs/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap}/homozygous.log"
 
 use rule sniffles_standard as hg38_remapped_ambiguous_hap_standard_call with:
     # This rule uses the standard Sniffles germline calling mode.
@@ -398,6 +407,26 @@ use rule sniffles_standard as hg38_remapped_ambiguous_hap_standard_call with:
     log:
         "logs/alignment/HG002/minimap2/standard/variants/sniffles_standard/hg38/all_{hap}.log"
 
+use rule T2T_unphased_standard_call as T2T_ambiguous_hap_standard_call with:
+    input:
+        bam = "output/alignment/HG002/minimap2/standard/mapped/self/{hap1}/{hap2}_to_{hap1}.bam",
+        bai = "output/alignment/HG002/minimap2/standard/mapped/self/{hap1}/{hap2}_to_{hap1}.bam.bai"
+    output:
+        vcf='output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap1}/{hap2}_to_{hap1}.vcf.gz',
+        snf='output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap1}/{hap2}_to_{hap1}.snf',
+        tbi='output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap1}/{hap2}_to_{hap1}.vcf.gz.tbi'
+    conda:
+        '../envs/sniffles.yml'
+    threads:
+        5
+    resources:
+        mem_mb=60000
+    params:
+        refgenome = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1.fasta.gz",
+        mapq = config['sniffles']['mapq'],
+    log:
+        "logs/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap1}/{hap2}_to_{hap1}.log"
+
 use rule sniffles_standard as hg38_remapped_unambiguous_hap_standard_call with:
     # This rule uses the standard Sniffles germline calling mode.
     # It call SVs from a BAM of unambiguous {hap} phased reads mapped to hg38.
@@ -421,6 +450,26 @@ use rule sniffles_standard as hg38_remapped_unambiguous_hap_standard_call with:
     log:
         "logs/alignment/HG002/minimap2/standard/variants/sniffles_standard/hg38/unambiguous_{hap}.log"
 
+use rule T2T_unphased_standard_call as T2T_unambiguous_hap_standard_call with:
+    input:
+        bam = "output/alignment/HG002/minimap2/standard/mapped/self/{hap1}/unambiguous_{hap2}_to_{hap1}.bam",
+        bai = "output/alignment/HG002/minimap2/standard/mapped/self/{hap1}/unambiguous_{hap2}_to_{hap1}.bam.bai"
+    output:
+        vcf='output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap1}/unambiguous_{hap2}_to_{hap1}.vcf.gz',
+        snf='output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap1}/unambiguous_{hap2}_to_{hap1}.snf',
+        tbi='output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap1}/unambiguous_{hap2}_to_{hap1}.vcf.gz.tbi'
+    conda:
+        '../envs/sniffles.yml'
+    threads:
+        5
+    resources:
+        mem_mb=60000
+    params:
+        refgenome = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1.fasta.gz",
+        mapq = config['sniffles']['mapq'],
+    log:
+        "logs/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap1}/unambiguous_{hap2}_to_{hap1}.log"
+
 # Section 4: Benchmarking mapped variants
 
 rule hg38_full_CMRG_benchmark:
@@ -428,8 +477,8 @@ rule hg38_full_CMRG_benchmark:
         query = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/hg38/{file}.vcf.gz",
         query_index = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/hg38/{file}.vcf.gz.tbi",
         jl = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/hg38/{file}.jl",
-        benchmark = "benchmarks/HG002/HG002_GRCh38_CMRG_SV_v1.00.vcf.gz",
-        benchmark_index = "benchmarks/HG002/HG002_GRCh38_CMRG_SV_v1.00.vcf.gz.tbi",
+        benchmark = "benchmarks/HG002/unphased_HG002_GRCh38_CMRG_SV_v1.00.vcf.gz",
+        benchmark_index = "benchmarks/HG002/unphased_HG002_GRCh38_CMRG_SV_v1.00.vcf.gz.tbi",
         includebed = "benchmarks/HG002/HG002_GRCh38_CMRG_SV_v1.00.bed"
     output:
         expand("output/alignment/HG002/minimap2/standard/variants/truvari/hg38/hg38_full_CMRG_benchmark/{file}/{outfiles}", allow_missing = True,
@@ -474,8 +523,8 @@ use rule hg38_full_CMRG_benchmark as hg38_full_dipcall_benchmark with:
         query = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/hg38/{file}.vcf.gz",
         query_index = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/hg38/{file}.vcf.gz.tbi",
         jl = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/hg38/{file}.jl",
-        benchmark = "benchmarks/HG002/GRCh38_HG2-T2TQ100-V1.0.vcf.gz",
-        benchmark_index = "benchmarks/HG002/GRCh38_HG2-T2TQ100-V1.0.vcf.gz.tbi",
+        benchmark = "benchmarks/HG002/unphased_GRCh38_HG2-T2TQ100-V1.0.vcf.gz",
+        benchmark_index = "benchmarks/HG002/unphased_GRCh38_HG2-T2TQ100-V1.0.vcf.gz.tbi",
         includebed = "benchmarks/HG002/GRCh38_HG2-T2TQ100-V1.0_stvar.benchmark.bed"
     output:
         expand("output/alignment/HG002/minimap2/standard/variants/truvari/hg38/full_dipcall_benchmark/{file}/{outfiles}", allow_missing = True,
@@ -494,15 +543,79 @@ use rule hg38_full_CMRG_benchmark as hg38_hap_dipcall_benchmark with:
         expand("output/alignment/HG002/minimap2/standard/variants/truvari/hg38/dipcall_{hap}_benchmark/{file}/{outfiles}", allow_missing = True,
                outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
 
+use rule hg38_full_CMRG_benchmark as T2T_MATERNAL_to_PATERNAL_CMRG_benchmark with:
+    # NOTE: The benchmark bed file is not split by hap * (does it need to be?)
+    input:
+        query = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unambiguous_MATERNAL.vcf.gz",
+        query_index = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unambiguous_MATERNAL.vcf.gz.tbi",
+        jl = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unambiguous_MATERNAL.jl",
+        benchmark = "benchmarks/HG002/liftover/MATERNAL_HG002_GRCh38_CMRG_SV_v1.00.to_HG002_PATERNAL.vcf.gz",
+        benchmark_index = "benchmarks/HG002/liftover/MATERNAL_HG002_GRCh38_CMRG_SV_v1.00.to_HG002_PATERNAL.vcf.gz.tbi",
+        includebed = "benchmarks/HG002/liftover/HG002_GRCh38_CMRG_SV_v1.00.to_HG002_PATERNAL.bed"
+    params:
+        refgenome = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1.fasta.gz",
+        outdir = lambda wildcards, output: os.path.dirname(output[0])
+    output:
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/MATERNAL/CMRG_MATERNAL_benchmark/unambiguous_MATERNAL_to_PATERNAL/{outfiles}", allow_missing = True,
+               outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
+
+use rule hg38_full_CMRG_benchmark as T2T_PATERNAL_to_MATERNAL_CMRG_benchmark with:
+    # NOTE: The benchmark bed file is not split by hap * (does it need to be?)
+    input:
+        query = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unambiguous_PATERNAL.vcf.gz",
+        query_index = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unambiguous_PATERNAL.vcf.gz.tbi",
+        jl = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unambiguous_PATERNAL.jl",
+        benchmark = "benchmarks/HG002/liftover/PATERNAL_HG002_GRCh38_CMRG_SV_v1.00.to_HG002_MATERNAL.vcf.gz",
+        benchmark_index = "benchmarks/HG002/liftover/PATERNAL_HG002_GRCh38_CMRG_SV_v1.00.to_HG002_MATERNAL.vcf.gz.tbi",
+        includebed = "benchmarks/HG002/liftover/HG002_GRCh38_CMRG_SV_v1.00.to_HG002_MATERNAL.bed"
+    params:
+        refgenome = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1.fasta.gz",
+        outdir = lambda wildcards, output: os.path.dirname(output[0])
+    output:
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/PATERNAL/CMRG_PATERNAL_benchmark/unambiguous_PATERNAL_to_MATERNAL/{outfiles}", allow_missing = True,
+               outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
+
+use rule hg38_full_CMRG_benchmark as T2T_MATERNAL_to_PATERNAL_dipcall_benchmark with:
+    # NOTE: The benchmark bed file is not split by hap * (does it need to be?)
+    input:
+        query = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unambiguous_MATERNAL.vcf.gz",
+        query_index = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unambiguous_MATERNAL.vcf.gz.tbi",
+        jl = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unambiguous_MATERNAL.jl",
+        benchmark = "benchmarks/HG002/liftover/MATERNAL_HG002_GRCh38_CMRG_SV_v1.00.to_HG002_PATERNAL.vcf.gz",
+        benchmark_index = "benchmarks/HG002/liftover/MATERNAL_HG002_GRCh38_CMRG_SV_v1.00.to_HG002_PATERNAL.vcf.gz.tbi",
+        includebed = "benchmarks/HG002/liftover/HG002_GRCh38_CMRG_SV_v1.00.to_HG002_PATERNAL.bed"
+    params:
+        refgenome = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1.fasta.gz",
+        outdir = lambda wildcards, output: os.path.dirname(output[0])
+    output:
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/MATERNAL/dipcall_MATERNAL_benchmark/unambiguous_MATERNAL_to_PATERNAL/{outfiles}", allow_missing = True,
+               outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
+
+use rule hg38_full_CMRG_benchmark as T2T_PATERNAL_to_MATERNAL_dipcall_benchmark with:
+    # NOTE: The benchmark bed file is not split by hap * (does it need to be?)
+    input:
+        query = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unambiguous_PATERNAL.vcf.gz",
+        query_index = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unambiguous_PATERNAL.vcf.gz.tbi",
+        jl = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/unambiguous_PATERNAL.jl",
+        benchmark = "benchmarks/HG002/liftover/PATERNAL_HG002_GRCh38_CMRG_SV_v1.00.to_HG002_MATERNAL.vcf.gz",
+        benchmark_index = "benchmarks/HG002/liftover/PATERNAL_HG002_GRCh38_CMRG_SV_v1.00.to_HG002_MATERNAL.vcf.gz.tbi",
+        includebed = "benchmarks/HG002/liftover/HG002_GRCh38_CMRG_SV_v1.00.to_HG002_MATERNAL.bed"
+    params:
+        refgenome = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1.fasta.gz",
+        outdir = lambda wildcards, output: os.path.dirname(output[0])
+    output:
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/PATERNAL/dipcall_PATERNAL_benchmark/unambiguous_PATERNAL_to_MATERNAL/{outfiles}", allow_missing = True,
+               outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
+
 # Section 5: SV read extraction and sampling
 rule extract_spanning_reads:
     input:
         script = "scripts/extract_spanning_per_sv.sh",
-        vcf = "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap}_benchmark/unambiguous_{hap}/tp-comp.vcf.gz",
-        bam = "output/alignment/HG002/minimap2/standard/mapped/hg38/unambiguous_{hap}.bam"
+        vcf = "output/alignment/HG002/minimap2/standard/variants/truvari/{benchmark_ref}/{benchmark}_{hap}_benchmark/unambiguous_{hap}/tp-comp.vcf.gz",
+        bam = "output/alignment/HG002/minimap2/standard/mapped/{benchmark_ref}/unambiguous_{hap}.bam"
     output:
-        outdir = directory("output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}"),
-        var_rnames = "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}.txt"
+        outdir = directory("output/alignment/HG002/minimap2/standard/variants/truvari/{benchmark_ref}/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}"),
+        var_rnames = "output/alignment/HG002/minimap2/standard/variants/truvari/{benchmark_ref}/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}.txt"
     conda: "../envs/bcftools.yml"
     wildcard_constraints:
         hap = '[A-Za-z]+',
@@ -511,7 +624,7 @@ rule extract_spanning_reads:
     params:
         outdir = lambda wildcards, output: os.path.dirname(output[0]),
     log:
-        "logs/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}.log"
+        "logs/alignment/HG002/minimap2/standard/variants/truvari/{benchmark_ref}/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}.log"
     shell:
         """
         bash {input.script} \
@@ -525,7 +638,7 @@ rule extract_spanning_reads:
         """
 
 def get_var_fastqs(wildcards):
-    pattern = f"output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{wildcards.benchmark}_{wildcards.hap}_benchmark/unambiguous_{wildcards.hap}/extracted_vars/{wildcards.chr}/*.fastq.gz"
+    pattern = f"output/alignment/HG002/minimap2/standard/variants/truvari/{wildcards.benchmark_ref}/{wildcards.benchmark}_{wildcards.hap}_benchmark/unambiguous_{wildcards.hap}/extracted_vars/{wildcards.chr}/*.fastq.gz"
     files = glob.glob(pattern)
     return files
 
@@ -533,23 +646,23 @@ rule aggregate_var_reads:
     input:
         get_var_fastqs
     output:
-        "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}/all_var_reads.fastq.gz"
+        "output/alignment/HG002/minimap2/standard/variants/truvari/{benchmark_ref}/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}/all_var_reads.fastq.gz"
     shell:
         """
         cat {input} > {output}
         """
 
-rule sample_var_reads:
+rule sample_n_var_reads:
     input:
         fastqs = get_var_fastqs
     output:
-        gz = "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}/var_{n}_reads.fastq.gz"
+        gz = "output/alignment/HG002/minimap2/standard/variants/truvari/{benchmark_ref}/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}/var_{n}_reads.fastq.gz"
     params:
         seed = 42,
         temp_fq = lambda wildcards, output: output.gz.strip('.gz')
     conda: "../envs/mapping.yml"
     log:
-        "logs/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}/var_{n}_reads.log"
+        "logs/alignment/HG002/minimap2/standard/variants/truvari/{benchmark_ref}/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}/var_{n}_reads.log"
     threads: 1
     shell:
         """
@@ -574,15 +687,15 @@ rule sample_var_reads:
 
 use rule aggregate_var_reads as merge_aggregated_reads with:
     input:
-        expand("output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}/all_var_reads.fastq.gz", allow_missing = True, chr = chrs)
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/{benchmark_ref}/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}/all_var_reads.fastq.gz", allow_missing = True, chr = chrs)
     output:
-        "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/all_var_reads.fastq.gz"
+        "output/alignment/HG002/minimap2/standard/variants/truvari/{benchmark_ref}/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/all_var_reads.fastq.gz"
 
-use rule aggregate_var_reads as merge_sampled_reads with:
+use rule aggregate_var_reads as merge_n_sampled_reads with:
     input:
-        expand("output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}/var_{n}_reads.fastq.gz", allow_missing = True, chr = chrs)
+        expand("output/alignment/HG002/minimap2/standard/variants/truvari/{benchmark_ref}/{benchmark}_{hap}_benchmark/unambiguous_{hap}/extracted_vars/{chr}/var_{n}_reads.fastq.gz", allow_missing = True, chr = chrs)
     output:
-        "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap}_benchmark/unambiguous_{hap}/simulation_spike/{n}_{hap}_spike.fastq.gz"
+        "output/alignment/HG002/minimap2/standard/variants/truvari/{benchmark_ref}/{benchmark}_{hap}_benchmark/unambiguous_{hap}/simulation_spike/{n}_{hap}_spike.fastq.gz"
 
 # Section 6: Simulation of mapping and spiking in SV reads
 
@@ -604,14 +717,14 @@ use rule minimap2 as baseline_self_assembly_mapping with:
     conda: "../envs/mapping.yml"
     threads: 10
 
-use rule minimap2 as spike_self_assembly_mapping with:
+use rule minimap2 as spiked_self_assembly_mapping with:
     # This rule maps HiFi reads to a haplotype assembly, allowing for self- and cross-mapping between haplotypes.
     # For example, this rule can map MATERNAL phased reads to either the MATERNAL assembly or the PATERNAL assembly.
     # We expect optimal mapping for matched haplotype mapping and worse mapping for cross-haplotype mapping.
     input:
-        hifi = "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap1}_benchmark/unambiguous_{hap1}/simulation_spike/{n}_{hap1}_spike.fastq.gz"
+        hifi = "output/alignment/HG002/minimap2/standard/variants/truvari/{benchmark_ref}/{benchmark}_{hap1}_benchmark/unambiguous_{hap1}/simulation_spike/{n}_{hap1}_spike.fastq.gz"
     output:
-        temp("output/alignment/HG002/minimap2/standard/mapped/self/{benchmark}_{hap1}_benchmark/{hap2}/unsorted/temp_{n}_{hap1}_spike_to_{hap2}.bam")
+        temp("output/alignment/HG002/minimap2/standard/mapped/self/{benchmark_ref}/{benchmark}_{hap1}_benchmark/{hap2}/unsorted/temp_{n}_{hap1}_spike_to_{hap2}.bam")
     wildcard_constraints:
         hap1 = '[A-Za-z]+',
         hap2 = '[A-Za-z]+'
@@ -622,12 +735,30 @@ use rule minimap2 as spike_self_assembly_mapping with:
     conda: "../envs/mapping.yml"
     threads: 2
 
+use rule minimap2 as aggregated_self_assembly_mapping with:
+    # This rule maps HiFi reads to a haplotype assembly, allowing for self- and cross-mapping between haplotypes.
+    # For example, this rule can map MATERNAL phased reads to either the MATERNAL assembly or the PATERNAL assembly.
+    # We expect optimal mapping for matched haplotype mapping and worse mapping for cross-haplotype mapping.
+    input:
+        hifi = "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap1}_benchmark/unambiguous_{hap1}/extracted_vars/all_var_reads.fastq.gz"
+    output:
+        temp("output/alignment/HG002/minimap2/standard/mapped/self/{benchmark_ref}/{benchmark}_{hap1}_benchmark/{hap2}/unsorted/temp_all_{hap1}_spike_to_{hap2}.bam")
+    wildcard_constraints:
+        hap1 = '[A-Za-z]+',
+        hap2 = '[A-Za-z]+'
+    params:
+        refgenome = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1_{hap2}.fasta.gz",
+        readgroup = "@RG\\tID:HG002\\tDS:all_{hap1}_spike_to_{hap2}\\tPL:PACBIO",
+        minQ = config['samtools']['minQ']
+    conda: "../envs/mapping.yml"
+    threads: 2
+
 rule merge_spiked_self_assembly_mapping:
     input:
         baseline = "output/alignment/HG002/minimap2/standard/mapped/self/{hap2}/{hap2}_to_{hap2}.bam",
-        spike = "output/alignment/HG002/minimap2/standard/mapped/self/{benchmark}_{hap1}_benchmark/{hap2}/temp_{n}_{hap1}_spike_to_{hap2}.bam"
+        spike = "output/alignment/HG002/minimap2/standard/mapped/self/{benchmark_ref}/{benchmark}_{hap1}_benchmark/{hap2}/temp_{n}_{hap1}_spike_to_{hap2}.bam"
     output:
-        "output/alignment/HG002/minimap2/standard/mapped/simulation/{benchmark}_{hap1}_benchmark/{n}_{hap1}_spike_to_{hap2}.bam",
+        "output/alignment/HG002/minimap2/standard/mapped/simulation/{benchmark_ref}/{benchmark}_{hap1}_benchmark/{n}_{hap1}_spike_to_{hap2}.bam",
     wildcard_constraints:
         hap1 = '[A-Za-z]+',
         hap2 = '[A-Za-z]+'
@@ -645,9 +776,9 @@ use rule sniffles_standard as baseline_self_assembly_standard_call with:
         bam = "output/alignment/HG002/minimap2/standard/mapped/self/{hap2}/{hap1}_to_{hap2}.bam",
         index = "output/alignment/HG002/minimap2/standard/mapped/self/{hap2}/{hap1}_to_{hap2}.bam.bai"
     output:
-        vcf='output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_standard/{hap1}_to_{hap2}/{hap1}_to_{hap2}.vcf.gz',
-        snf='output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_standard/{hap1}_to_{hap2}/{hap1}_to_{hap2}.snf',
-        tbi='output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_standard/{hap1}_to_{hap2}/{hap1}_to_{hap2}.vcf.gz.tbi'
+        vcf='output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_standard/{hap1}_to_{hap2}/{hap1}_to_{hap2}.vcf.gz',
+        snf='output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_standard/{hap1}_to_{hap2}/{hap1}_to_{hap2}.snf',
+        tbi='output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_standard/{hap1}_to_{hap2}/{hap1}_to_{hap2}.vcf.gz.tbi'
     wildcard_constraints:
         hap1 = '[A-Za-z]+',
         hap2 = '[A-Za-z]+'
@@ -663,18 +794,18 @@ use rule sniffles_standard as baseline_self_assembly_standard_call with:
         repeats = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1_{hap2}.simpleRepeat.bed",
         mapq = config['sniffles']['mapq'],
     log:
-        "logs/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap2}/{hap1}_to_{hap2}.log"
+        "logs/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_standard/self/{hap2}/{hap1}_to_{hap2}.log"
 
 use rule sniffles_mosaic as spiked_self_assembly_mosaic_call with:
     # This rule uses the standard Sniffles germline calling mode.
     # It call SVs from a BAM of all {hap1} phased reads mapped to {hap2}.
     input:
-        bam = "output/alignment/HG002/minimap2/standard/mapped/simulation/{benchmark}_{hap1}_benchmark/{n}_{hap1}_spike_to_{hap2}.bam",
-        index = "output/alignment/HG002/minimap2/standard/mapped/simulation/{benchmark}_{hap1}_benchmark/{n}_{hap1}_spike_to_{hap2}.bam.bai"
+        bam = "output/alignment/HG002/minimap2/standard/mapped/simulation/{benchmark_ref}/{benchmark}_{hap1}_benchmark/{n}_{hap1}_spike_to_{hap2}.bam",
+        index = "output/alignment/HG002/minimap2/standard/mapped/simulation/{benchmark_ref}/{benchmark}_{hap1}_benchmark/{n}_{hap1}_spike_to_{hap2}.bam.bai"
     output:
-        vcf='output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_mosaic/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz',
-        snf='output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_mosaic/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.snf',
-        tbi='output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_mosaic/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz.tbi'
+        vcf='output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_mosaic/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz',
+        snf='output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_mosaic/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.snf',
+        tbi='output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_mosaic/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz.tbi'
     wildcard_constraints:
         hap1 = '[A-Za-z]+',
         hap2 = '[A-Za-z]+'
@@ -694,18 +825,18 @@ use rule sniffles_mosaic as spiked_self_assembly_mosaic_call with:
         mosaic_af_max = config['sniffles']['mosaic-af-max'],
         mosaic_qc_strand = config['sniffles']['mosaic-qc-strand']
     log:
-        "logs/alignment/HG002/minimap2/standard/variants/simulation/sniffles_mosaic/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}.log"
+        "logs/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_mosaic/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}.log"
 
 use rule sniffles_standard as spiked_self_assembly_standard_call with:
     # This rule uses the standard Sniffles germline calling mode.
     # It call SVs from a BAM of all {hap1} phased reads mapped to {hap2}.
     input:
-        bam = "output/alignment/HG002/minimap2/standard/mapped/simulation/{benchmark}_{hap1}_benchmark/{n}_{hap1}_spike_to_{hap2}.bam",
-        index = "output/alignment/HG002/minimap2/standard/mapped/simulation/{benchmark}_{hap1}_benchmark/{n}_{hap1}_spike_to_{hap2}.bam.bai"
+        bam = "output/alignment/HG002/minimap2/standard/mapped/simulation/{benchmark_ref}/{benchmark}_{hap1}_benchmark/{n}_{hap1}_spike_to_{hap2}.bam",
+        index = "output/alignment/HG002/minimap2/standard/mapped/simulation/{benchmark_ref}/{benchmark}_{hap1}_benchmark/{n}_{hap1}_spike_to_{hap2}.bam.bai"
     output:
-        vcf='output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_standard/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz',
-        snf='output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_standard/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.snf',
-        tbi='output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_standard/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz.tbi',
+        vcf='output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_standard/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz',
+        snf='output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_standard/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.snf',
+        tbi='output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_standard/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz.tbi',
     wildcard_constraints:
         hap1 = '[A-Za-z]+',
         hap2 = '[A-Za-z]+'
@@ -721,22 +852,22 @@ use rule sniffles_standard as spiked_self_assembly_standard_call with:
         repeats = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1_{hap2}.simpleRepeat.bed",
         mapq = config['sniffles']['mapq'],
     log:
-        "logs/alignment/HG002/minimap2/standard/variants/simulation/sniffles_standard/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}.log"
+        "logs/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_standard/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}.log"
 
 rule check_multi_hap_SVs:
     input:
         script = "scripts/python/check_multi_hap_SVs.py",
-        spiked = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz",
+        spiked = "output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz",
         hap1_rnames = "output/alignment/HG002/minimap2/standard/mapped/self/diploid/{hap1}_rnames.txt",
         hap2_rnames = "output/alignment/HG002/minimap2/standard/mapped/self/diploid/{hap2}_rnames.txt",
     output:
-        mixed = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/mixed_hap.vcf.gz",
-        hap1_only = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/hap1_only.vcf.gz",
-        hap2_only = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/hap2_only.vcf.gz",
-        report = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/multi_hap.report", # json formatted
-        rnames = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/multi_hap.rnames" # json formatted
+        mixed = "output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/mixed_hap.vcf.gz",
+        hap1_only = "output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/hap1_only.vcf.gz",
+        hap2_only = "output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/hap2_only.vcf.gz",
+        report = "output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/multi_hap.report", # json formatted
+        rnames = "output/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/multi_hap.rnames" # json formatted
     log:
-        "logs/alignment/HG002/minimap2/standard/variants/simulation/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/multi_hap.log"
+        "logs/alignment/HG002/minimap2/standard/variants/simulation/{benchmark_ref}/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/multi_hap.log"
     wildcard_constraints:
         hap1 = '[A-Za-z]+',
         hap2 = '[A-Za-z]+'
@@ -756,42 +887,141 @@ rule check_multi_hap_SVs:
         {log}
         """
 
-rule truvari_consistency:
-    input:
-        # replace baseline with all merged cross hap SV reads from benchmark being thrown in to matched hap bg
-        baseline = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_standard/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/agg_{hap1}_spike_to_{hap2}/callset.vcf.gz",
-        spiked = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz"
-    output:
-        tsv = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/spiked_consistency.tsv",
-        json = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/spiked_consistency.json"
-    wildcard_constraints:
-        hap1 = '[A-Za-z]+',
-        hap2 = '[A-Za-z]+'
-    conda: "../envs/truvari.yml"
-    threads: 1
-    shell:
-        """
-        truvari consistency --json {input.baseline} {input.spiked} --output {output.tsv} > {output.json}
-        """
-
-### Annotated vcf benchmarking against hg38 TP calls
 # Section 7: Evaluation of mapping and spiking simulation results
-# use rule truvari_hg38_germline_all as truvari_baseline_self_assembly_benchmark with:
-#     # Broken atm due to incompatibility of hg38 variant calls against cross hap mapping
-#     # Chain file solution won't yield all variants
-#     input: 
-#         query = "output/alignment/HG002/minimap2/standard/variants/sniffles_{setting}/self/{hap2}/annotated/merged_{n}_{hap1}_to_{hap2}.trf.vcf.gz",
-#         query_index = "output/alignment/HG002/minimap2/standard/variants/sniffles_{setting}/self/{hap2}/annotated/merged_{n}_{hap1}_to_{hap2}.trf.vcf.gz.tbi",
-#         jl = "output/alignment/HG002/minimap2/standard/variants/sniffles_{setting}/self/{hap2}/annotated/merged_{n}_{hap1}_to_{hap2}.trf.jl",
-#         benchmark = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap2}/annotated/{hap1}_to_{hap2}.trf.vcf.gz",
-#         benchmark_index = "output/alignment/HG002/minimap2/standard/variants/sniffles_standard/self/{hap2}/annotated/{hap1}_to_{hap2}.trf.vcf.gz.tbi"
+
+# Okay we are at the same problem where I can't compare cross map with hg38 sim so I need to work on the clever way to do this.
+# The "baseline false positives" are found by matched hap mapping and calling.
+# The "maximum expectation" is the difference between the matched hap calling and the cross map calling (all cross mapped).
+# The "standard expectation is the difference between the cross map calling (all cross mapped) and SV-only cross map calling (all cross SV reads only).
+# The "simulation recall" is the difference between the standard recall and where a progressively smaller number of reads are spiked in.
+
+
+# rule hg38_simulation_hap_CMRG_benchmark:
+#     # TODO: This currently benchmarks against the true positive set that was mapped against hg38 and benched against the hg38 CMRG benchmark, THEN lifted over.
+#     # This is not really the right approach.
+#     input:
+#         query = "output/alignment/HG002/minimap2/standard/variants/simulation/hg38/sniffles_{setting}/CMRG_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz",
+#         query_index = "output/alignment/HG002/minimap2/standard/variants/simulation/hg38/sniffles_{setting}/CMRG_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz.tbi",
+#         jl = "output/alignment/HG002/minimap2/standard/variants/simulation/hg38/sniffles_{setting}/CMRG_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.jl",
+#         benchmark = "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/CMRG_{hap1}_benchmark/unambiguous_{hap1}/tp-base.to_HG002_{hap2}.vcf.gz",
+#         benchmark_index = "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/CMRG_{hap1}_benchmark/unambiguous_{hap1}/tp-base.to_HG002_{hap2}.vcf.gz.tbi",
+#         # includebed = "benchmarks/HG002/liftover/HG002_GRCh38_CMRG_SV_v1.00.to_HG002_{hap2}.bed"
+#         # includebed = "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/CMRG_{hap1}_benchmark/unambiguous_{hap1}/tp-base.to_HG002_{hap2}.refwidened.bed"
 #     output:
-#         expand("output/alignment/HG002/minimap2/standard/variants/truvari/self/{hap2}/{setting}/{n}_{hap1}_to_{hap2}/{outfiles}", allow_missing = True,
+#         expand("output/alignment/HG002/minimap2/standard/variants/simulation/hg38/sniffles_{setting}/CMRG_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/{outfiles}", allow_missing = True,
 #                outfiles = ["tp-base.vcf.gz", "tp-comp.vcf.gz", "fp.vcf.gz", "fn.vcf.gz", "summary.json", "params.json", "candidate.refine.bed", "log.txt"])
-#     wildcard_constraints:
-#         hap1 = '[A-Za-z]+',
-#         hap2 = '[A-Za-z]+'
+#     params:
+#         refgenome = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1_{hap2}.fasta",
+#         outdir = lambda wildcards, output: os.path.dirname(output[0])
 #     conda: "../envs/truvari.yml"
 #     threads: 1
-#     params:
-#         outdir = lambda wildcards, output: os.path.dirname(output[0])
+#     shell:
+#         """
+#         # --pctseq 0 required to analyze <DEL> (unresolved deletion, needs clarification?)
+#         truvari bench \
+#         -f {params.refgenome} \
+#         -b {input.benchmark} \
+#         -c {input.query} \
+#         -o {params.outdir}/bench \
+#         -r 1000 \
+#         --dup-to-ins \
+#         --passonly
+
+#         mv {params.outdir}/bench/* {params.outdir}/.
+#         rm -r {params.outdir}/bench
+#         """
+
+# Temporary register
+rule benchmark_liftovervcf:
+    input:
+        vcf = "benchmarks/HG002/{benchmark}.vcf.gz",
+        dict = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1_{hap}.dict"
+    output:
+        vcf = "benchmarks/HG002/liftover/{benchmark}.to_HG002_{hap}.vcf.gz",
+        tbi = "benchmarks/HG002/liftover/{benchmark}.to_HG002_{hap}.vcf.gz.tbi",
+        rejected = "benchmarks/HG002/liftover/{benchmark}.to_HG002_{hap}.rejected.vcf.gz",
+    wildcard_constraints:
+        hap = '[A-Za-z]+'
+    params:
+        ref = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1_{hap}.fasta",
+        chain = "/global/scratch/users/stacy-l/references/HG002/GRCh38_to_hg002v1.0.{hap}.chain"
+    threads: 1
+    conda: "../envs/gatk.yml"
+    log: "logs/benchmarks/HG002/liftover/{benchmark}.to_HG002_{hap}.log"
+    shell:
+        """
+        picard -Xmx3G LiftoverVcf \
+        -I {input.vcf} \
+        -O {output.vcf} \
+        -C {params.chain} \
+        --REJECT {output.rejected} \
+        --CREATE_INDEX true \
+        -R {params.ref} \
+        --VERBOSITY DEBUG 2> {log}
+        """
+
+use rule benchmark_liftovervcf as tp_liftovervcf with:
+    input:
+        vcf = "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap1}_benchmark/unambiguous_{hap1}/tp-{set}.vcf.gz"
+    output:
+        vcf = "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap1}_benchmark/unambiguous_{hap1}/tp-{set}.to_HG002_{hap2}.vcf.gz",
+        tbi = "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap1}_benchmark/unambiguous_{hap1}/tp-{set}.to_HG002_{hap2}.vcf.gz.tbi",
+        rejected = "output/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap1}_benchmark/unambiguous_{hap1}/tp-{set}.to_HG002_{hap2}.rejected.vcf.gz"
+    params:
+        ref = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1_{hap2}.fasta",
+        chain = "/global/scratch/users/stacy-l/references/HG002/GRCh38_to_hg002v1.0.{hap2}.chain"
+    log: "logs/alignment/HG002/minimap2/standard/variants/truvari/hg38/{benchmark}_{hap1}_benchmark/unambiguous_{hap1}/tp-{set}.to_HG002_{hap2}.log"
+
+rule benchmark_liftoverbed:
+    input:
+        "benchmarks/HG002/{file}.bed",
+    output:
+        mapped = "benchmarks/HG002/liftover/{file}.to_HG002_{hap}.bed",
+        unmapped = "benchmarks/HG002/liftover/{file}.to_HG002_{hap}.unmapped.bed"
+    conda:
+        "../envs/liftover.yml"
+    params:
+        chain = "/global/scratch/users/stacy-l/references/HG002/GRCh38_to_hg002v1.0.{hap}.chain"
+    shell:
+        """
+        liftOver {input} {params.chain} {output.mapped} {output.unmapped}
+        """
+rule get_refwidened_CMRG_bed:
+    input:
+        "benchmarks/HG002/HG002_GRCh38_CMRG_SV_v1.00.vcf.gz"
+    output:
+        "benchmarks/HG002/HG002_GRCh38_CMRG_SV_v1.00.refwidened.bed"
+    shell:
+        """
+        echo "Creating refwidened BED file: ${output}"
+        bcftools query -f '%INFO/REFWIDENED\n' {input} |
+        awk -F':|-' '{
+            chr = $1;
+            start = $2;
+            end = $3;
+            print chr"\t"start"\t"end
+        }' > {output}
+        """
+
+rule get_refwidened_vcf_bed:
+    input:
+        "{file}.vcf.gz"
+    output:
+        "{file}.refwidened.bed"
+    params:
+        padding = 1000
+    conda:
+        "../envs/truvari.yml"
+    shell:
+        """
+        echo "Creating refwidened BED file: {output}"
+        bcftools query -f '%CHROM\t%POS\t%INFO/SVLEN\n' {input} |
+        awk -v padding={params.padding} -F'\t' '{{
+            chr = $1;
+            pos = $2;
+            svlen = $3;
+            start = pos - padding;
+            end = pos + svlen + padding;
+            print chr"\t"start"\t"end
+        }}' > {output}
+        """

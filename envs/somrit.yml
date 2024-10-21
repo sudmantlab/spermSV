@@ -1,0 +1,11 @@
+name: somrit
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - minimap2==2.26
+  - mappy==2.28
+  - pysam
+  - intervaltree
+  - abpoa
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/somrit

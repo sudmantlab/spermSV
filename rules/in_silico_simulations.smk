@@ -1,152 +1,333 @@
-rule survivor_create_error_profile:
-    # Creates an error profile from a fractional subsample of the HPRC HG002 (Revio CCS) dataset.
+rule split_index_ref:
     input:
-        'output/mapping/hg38/winnowmap/standard/{control}.sorted.merged.bam'
+        "/global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa"
     output:
-        'output/mapping/hg38/simulations/in_silico/SURVIVOR/{control}_error_profile.txt'
+        directory("output/in_silico/references/hg38")
     conda:
-        "../envs/sniffles.yml"
-    threads: 40
+        "../envs/mapping.yml"
     params:
-        minreadlen = config['simulations']['survivor']['error_profile']['minreadlen'],
-        fraction = config['simulations']['survivor']['error_profile']['fraction']
-    shell:
+        faSplit = "/global/scratch/users/stacy-l/software/ucsc_utilities/faSplit"
+    shell"
         """
-        samtools view -@ {threads} -s {params.fraction} {input} | SURVIVOR scanreads {params.minreadlen} {output}
+        {params.faSplit} byname {input} {output}/
         """
 
-rule sim_it_preproc_mapping:
-    # Uses winnowmap to map a subset of control (HPRC HG002 Revio CCS) reads to a defined reference.
+
+rule subsample_training:
     input:
-        reads = 'output/mapping/hg38/simulations/in_silico/Sim-it/{control}_{chr}_subset.fasta'
+        "output/alignment/hg38/minimap2/standard/mapped/HG002.sorted.merged.bam"
     output:
-        # placeholder until I know what gets created here
-        'output/mapping/hg38/simulations/in_silico/Sim-it/{control}_{chr}_status.success'
+        "output/in_silico/badread/subsampled_HG002.bam"
     conda:
-        "../envs/Sim-it.yml"
-    threads: 1
+        "../envs/mapping.yml"
+    threads: 5
+    params:
+        seed = 42
     shell:
         """
-        perl code/Sim-it/train_error_profile.pl -ref {input.reference} -reads {input.reads}
+        samtools view -b -@ {threads} \
+        --subsample 0.05 \
+        --subsample-seed {params.seed} \
+        -o {output} \
+        {input}
         """
 
-rule sim_it_create_error_profile:
-    # Creates an error profile from a subset of reads from the control (HPRC HG002 Revio CCS) dataset.
+rule training2fastq:
     input:
-        reads = 'output/mapping/hg38/simulations/in_silico/Sim-it/{control}_{chr}_subset.fasta'
+        "output/in_silico/badread/subsampled_HG002.bam"
     output:
-        # placeholder until I know what gets created here
-        'output/mapping/hg38/simulations/in_silico/Sim-it/{control}_{chr}_status.success'
+        "output/in_silico/badread/subsampled_HG002.fastq.gz"
+    threads: 5
     conda:
-        "../envs/Sim-it.yml"
-    params:
-        reference = config['simulations']
-    threads: 1
+        "../envs/mapping.yml"
     shell:
         """
-        perl code/Sim-it/train_error_profile.pl -ref {params.reference} -reads {input.reads}
+        samtools fastq -@ {threads} -c 6 -T '*' {input} -0 {output}
         """
 
-rule survivor_simgenome:
-    # Using a custom error profile, reference genome, & config (params) file, generates a modified .fasta 
-    # containing SVs defined by the params file. Simulated variants are described with the bed & vcf files,
-    # and their identity is relative to the provided reference (unmodified) genome fasta ("option 0").
-    # Note that this requires a .fa/.fasta reference file: compressed .fa.gz and etc formats will not work.
+rule training2paf:
     input:
-        error_profile = 'output/mapping/hg38/simulations/in_silico/SURVIVOR/HG002_error_profile.txt',
-        params = 'config/packages/SURVIVOR/{sim_id}.params'
+        "output/in_silico/badread/subsampled_HG002.fastq.gz"
     output:
-        bed = 'output/mapping/hg38/simulations/in_silico/SURVIVOR/{sim_id}/{sim_id}.bed',
-        vcf = 'output/mapping/hg38/simulations/in_silico/SURVIVOR/{sim_id}/{sim_id}.vcf',
-        fasta = 'output/mapping/hg38/simulations/in_silico/SURVIVOR/{sim_id}/{sim_id}.fasta',
-        insertions = 'output/mapping/hg38/simulations/in_silico/SURVIVOR/{sim_id}/{sim_id}.insertions.fa'
+        "output/in_silico/badread/subsampled_HG002.paf.gz"
     conda:
-        "../envs/sniffles.yml"
+        "VISOR"
+    params:
+        refgenome = config["reference"]["fasta"].strip('.gz')
+    threads: 20
+    shell:
+        """
+        minimap2 {params.refgenome} {input} -t {threads} -x map-hifi -y -L --eqx -c --cs --MD | gzip > {output}
+        """
+
+rule train_error_model:
+    input:
+        fastq = "output/in_silico/badread/subsampled_HG002.fastq.gz",
+        paf = "output/in_silico/badread/subsampled_HG002.paf.gz"
+    output:
+        "output/in_silico/badread/subsampled_HG002.error_model"
+    conda:
+        "VISOR"
     threads: 1
     params:
-        refgenome = config['simulations']['survivor']['refgenome'],
-        snp_fraction = config['simulations']['survivor']['snp_fraction'],
+        refgenome = config["reference"]["fasta"].strip('.gz')
+    log:
+        "output/in_silico/badread/subsampled_HG002.error_model.log"
+    shell:
+        """
+        badread error_model --reference {params.refgenome} --reads {input.fastq} --alignment {input.paf} --debug > {output} 2>{log}
+        """
+
+rule train_qscore_model:
+    input:
+        fastq = "output/in_silico/badread/subsampled_HG002.fastq.gz",
+        paf = "output/in_silico/badread/subsampled_HG002.paf.gz"
+    output:
+        "output/in_silico/badread/subsampled_HG002.qscore_model"
+    conda:
+        "VISOR"
+    threads: 1
+    params:
+        refgenome = config["reference"]["fasta"].strip('.gz')
+    log:
+        "output/in_silico/badread/subsampled_HG002.qscore_model.log"
+    shell:
+        """
+        badread qscore_model --reference {params.refgenome} --reads {input.fastq} --alignment {input.paf} --debug > {output} 2>{log}
+        """
+
+rule generate_dipcall_bed:
+    input:
+        # vcf = "ALL.wgs.integrated_sv_map_v2_GRCh38.20130502.svs.genotypes.vcf.gz",
+        # tbi = "ALL.wgs.integrated_sv_map_v2_GRCh38.20130502.svs.genotypes.vcf.gz.tbi",
+        vcf = "/global/scratch/users/stacy-l/spermSV/benchmarks/HG002/GRCh38_HG2-T2TQ100-V1.0.vcf.gz",
+        tbi = "/global/scratch/users/stacy-l/spermSV/benchmarks/HG002/GRCh38_HG2-T2TQ100-V1.0.vcf.gz.tbi"
+    output:
+        h1 = "output/in_silico/VISOR/dipcall/dipcall.h1.bed",
+        h2 = "output/in_silico/VISOR/dipcall/dipcall.h2.bed",
+    conda:
+        "VISOR"
+    params:
+        refgenome = config["reference"]["fasta"].strip('.gz'),
         outdir = lambda wildcards, output: os.path.dirname(output[0]),
+    threads: 1
     shell:
         """
-        SURVIVOR simSV {params.refgenome} {input.params} {params.snp_fraction} 0 {params.outdir}/{wildcards.sim_id}/{wildcards.sim_id}
+        # CMRG: CONTRAC, DUP, SIMPLEDEL, SIMPLEINS, SUBSDEL
+        # dipcall: DEL and INS only
+
+        bcftools filter -i "INFO/SVLEN >= 50 & INFO/SVLEN <= 10000" {input.vcf} | bcftools query -f '%CHROM\t%POS\t%INFO/SVTYPE\t%INFO/SVLEN[\t%SAMPLE=%GT]\n' - | grep -w "DEL" | grep "1|0" | grep -v "^#"  | awk 'OFS=FS="\t"''{{print $1, $2, $2+4, "deletion", "None", "0"}}' >> {output.h1}
+        bcftools filter -i "INFO/SVLEN >= 50 & INFO/SVLEN <= 10000" {input.vcf} | bcftools query -f '%CHROM\t%POS\t%INFO/SVTYPE\t%INFO/SVLEN[\t%SAMPLE=%GT]\n' - | grep -w "DEL" | grep "0|1" | grep -v "^#"  | awk 'OFS=FS="\t"''{{print $1, $2, $2+4, "deletion", "None", "0"}}' >> {output.h2}
+        bcftools filter -i "INFO/SVLEN >= 50 & INFO/SVLEN <= 10000" {input.vcf} | bcftools query -f '%CHROM\t%POS\t%INFO/SVTYPE\t%INFO/SVLEN[\t%SAMPLE=%GT]\t%ALT\n' - | grep -w "INS" | grep "1|0" | grep -v "^#"  | awk 'OFS=FS="\t"''{{print $1, $2, $2+4, "insertion", $6, "0"}}' >> {output.h1}
+        bcftools filter -i "INFO/SVLEN >= 50 & INFO/SVLEN <= 10000" {input.vcf} | bcftools query -f '%CHROM\t%POS\t%INFO/SVTYPE\t%INFO/SVLEN[\t%SAMPLE=%GT]\t%ALT\n' - | grep -w "INS" | grep "0|1" | grep -v "^#"  | awk 'OFS=FS="\t"''{{print $1, $2, $2+4, "insertion", $6, "0"}}' >> {output.h2}
         """
 
-rule survivor_simreads:
-    # Using a custom error profile, reference genome, & config (params) file, generates a modified .fasta 
-    # containing SVs defined by the params file. Simulated variants are described with the bed & vcf files,
-    # and their identity is relative to the provided reference (unmodified) genome fasta ("option 0").
-    # Note that this requires a .fa/.fasta reference file: compressed .fa.gz and etc formats will not work.
-    # This rule is triggered by the expand() call in merge_survivor_svsimreads for parallelization purposes.
+rule generate_CMRG_bed:
     input:
-        error_profile = 'output/mapping/hg38/simulations/in_silico/SURVIVOR/HG002_error_profile.txt',
-        fasta = 'output/mapping/hg38/simulations/in_silico/SURVIVOR/{sim_id}/{sim_id}.fasta',
+        vcf = "/global/scratch/users/stacy-l/spermSV/benchmarks/HG002/HG002_GRCh38_CMRG_SV_v1.00.vcf.gz",
+        tbi = "/global/scratch/users/stacy-l/spermSV/benchmarks/HG002/HG002_GRCh38_CMRG_SV_v1.00.vcf.gz.tbi"
     output:
-        temp('output/mapping/hg38/simulations/in_silico/SURVIVOR/{sim_id}/{sim_id}.temp_{n_sim}.fasta')
+        h1 = "output/in_silico/VISOR/CMRG/CMRG.h1.bed",
+        h2 = "output/in_silico/VISOR/CMRG/CMRG.h2.bed",
     conda:
-        "../envs/sniffles.yml"
-    threads: 1
+        "VISOR"
     params:
+        refgenome = config["reference"]["fasta"].strip('.gz'),
         outdir = lambda wildcards, output: os.path.dirname(output[0]),
-    shell:
-        """
-        echo "Generating simulation reads, process {wildcards.n_sim}..."
-        SURVIVOR simreads {input.fasta} {input.error_profile} 1 {output}
-        """
-
-rule merge_survivor_svsimreads:
-    # This rule triggers parallel generation of simulated reads by SURVIVOR w/ the survivor_simreads rule.
-    # Note that target coverage is set in the configfile.
-    input:
-        expand('output/mapping/hg38/simulations/in_silico/SURVIVOR/{sim_id}/{sim_id}.temp_{n_sim}.fasta', allow_missing = True, 
-                n_sim = np.arange(0, config['simulations']['survivor']['coverage']))
-    output:
-        'output/mapping/hg38/simulations/in_silico/SURVIVOR/{sim_id}/{sim_id}.simreads.fasta'
-    conda:
-        "../envs/sniffles.yml"
     threads: 1
     shell:
         """
-        cat {input} > {output}
+        # CMRG: CONTRAC, DUP, SIMPLEDEL, SIMPLEINS, SUBSDEL
+        # dipcall: DEL and INS only
+
+        bcftools query -f '%CHROM\t%POS\t%INFO/REPTYPE\t%INFO/BREAKSIMLENGTH[\t%SAMPLE=%GT]\n' {input.vcf} | grep "DEL" | grep "1|0" | grep -v "^#"  | awk 'OFS=FS="\t"''{{if ($3 > 50) print $1, $2, $2+4, "deletion", "None", "0"}}' >> {output.h1}
+        bcftools query -f '%CHROM\t%POS\t%INFO/REPTYPE\t%INFO/BREAKSIMLENGTH[\t%SAMPLE=%GT]\n' {input.vcf} | grep "DEL" | grep "0|1" | grep -v "^#"  | awk 'OFS=FS="\t"''{{if ($3 > 50) print $1, $2, $2+4, "deletion", "None", "0"}}' >> {output.h2}
+        bcftools query -f '%CHROM\t%POS\t%INFO/REPTYPE\t%INFO/BREAKSIMLENGTH[\t%SAMPLE=%GT]\t%ALT\n' {input.vcf} | grep "INS" | grep "1|0" | grep -v "^#"  | awk 'OFS=FS="\t"''{{if ($3 > 50) print $1, $2, $2+4, "insertion", $6, "0"}}' >> {output.h1}
+        bcftools query -f '%CHROM\t%POS\t%INFO/REPTYPE\t%INFO/BREAKSIMLENGTH[\t%SAMPLE=%GT]\t%ALT\n' {input.vcf} | grep "INS" | grep "0|1" | grep -v "^#"  | awk 'OFS=FS="\t"''{{if ($3 > 50) print $1, $2, $2+4, "insertion", $6, "0"}}' >> {output.h2}
         """
 
-rule sim_it_refreads:
-    # Given a config file, runs Sim-it to create fastq files of simulated reference (no SV) reads.
+rule generate_alu_bed:
     input:
-        config = "config/packages/Sim-it/ref_reads.txt"
+        script = "scripts/python/create_hack_bed.py",
+        alu_fasta = "output/in_silico/repeats/dfam_AluY_homininae.fasta",
+        L1_fasta = "output/in_silico/repeats/dfam_L1_homininae.fasta"
     output:
-        bam = "output/mapping/hg38/simulations/in_silico/Sim-it/ref_reads/ref_reads_HAP12.bam",
-        reads = expand("output/mapping/hg38/simulations/in_silico/Sim-it/ref_reads/Long_reads_ref_reads_{hap}.fasta", allow_missing = True, hap = ['HAP1', 'HAP12', 'HAP2']),
-        log = "output/mapping/hg38/simulations/in_silico/Sim-it/ref_reads/log_ref_reads.txt"
+        "output/in_silico/VISOR/alu/hack_insertions.bed"
     conda:
-        "../envs/Sim-it.yml"
-    threads: 1
+        "../envs/biopython.yml"
     params:
-        outdir = lambda wildcards, output: os.path.dirname(output[0]),
+        maxdims = "output/in_silico/VISOR/hg38.maxdims.tsv",
+        alu_count = 10,
+        L1_count = 1,
+    threads: 1
     shell:
         """
-        perl code/Sim-it/Sim-it1.3.4.pl -c {input.config} -o {params.outdir}
+        python {input.script} \
+        --chrom_info {params.maxdim} \
+        --alu_count {params.alu_count} \
+        --L1_count {params.L1_count} \
+        --alu_fasta {input.alu_fasta} \
+        --L1_fasta {input.L1_fasta} \
+        --output {output} --verbose
         """
 
-rule sim_it_svsimreads:
-    # Given a config file, runs Sim-it to create fastq files of simulated SV-containing reads.
-    # Uses the default Sequel error profile for PacBio reads, unclear how to train a custom error profile right now :(
+rule HACk_benchmark:
     input:
-        config = "config/packages/Sim-it/{sim_id}.txt"
+        h1 = "output/in_silico/VISOR/{benchmark}/{benchmark}.h1.bed",
+        h2 = "output/in_silico/VISOR/{benchmark}/{benchmark}.h2.bed"
     output:
-        reads = expand("output/mapping/hg38/simulations/in_silico/Sim-it/{sim_id}/Long_reads_{sim_id}_{hap}.fasta", allow_missing = True, hap = ['HAP1', 'HAP12', 'HAP2']),
-        log = "output/mapping/hg38/simulations/in_silico/Sim-it/{sim_id}/log_{sim_id}.txt", 
-        graphs = expand("output/mapping/hg38/simulations/in_silico/Sim-it/{sim_id}/graph_{svtype}_{sim_id}.txt", allow_missing = True, svtype = ['DEL', 'INS', 'INV']),
-        ref = "output/mapping/hg38/simulations/in_silico/Sim-it/{sim_id}/{sim_id}.fasta",
-        hap_refs = expand("output/mapping/hg38/simulations/in_silico/Sim-it/{sim_id}/{sim_id}_haplotype{hap}.fasta", allow_missing = True, hap = [1, 2]),
-        vcf = "output/mapping/hg38/simulations/in_silico/Sim-it/{sim_id}/{sim_id}.vcf",
-        # bam = "output/mapping/hg38/simulations/in_silico/Sim-it/{sim_id}/{sim_id}_HAP12.bam"
+        "output/in_silico/VISOR/{benchmark}/haps/h1.fa",
+        "output/in_silico/VISOR/{benchmark}/haps/h1.fa.fai",
+        "output/in_silico/VISOR/{benchmark}/haps/h2.fa",
+        "output/in_silico/VISOR/{benchmark}/haps/h2.fa.fai"
     conda:
-        "../envs/Sim-it.yml"
-    threads: 1
+        "VISOR"
     params:
-        outdir = lambda wildcards, output: os.path.dirname(output[0]),
+        refgenome = config["reference"]["fasta"].strip('.gz'),
+        outdir = lambda wildcards, output: os.path.dirname(output[0])
+    threads: 7
     shell:
         """
-        perl code/Sim-it/Sim-it1.3.4.pl -c {input.config} -o {params.outdir}
+        VISOR HACk -g {params.refgenome} -b {input.h1} {input.h2} -o {params.outdir}
         """
+
+rule HACk_alu:
+    input:
+        "output/in_silico/VISOR/alu/hack_insertions.bed"
+    output:
+        "output/in_silico/VISOR/alu/haps/h1.fa",
+        "output/in_silico/VISOR/alu/haps/h1.fa.fai"
+    conda:
+        "VISOR"
+    params:
+        refgenome = config["reference"]["fasta"].strip('.gz'),
+        outdir = lambda wildcards, output: os.path.dirname(output[0])
+    threads: 7
+    shell:
+        """
+        rm -r {params.outdir} # cleans existing folder to avoid triggering error
+        VISOR HACk -g {params.refgenome} -b {input} -o {params.outdir}
+        """
+
+rule generate_benchmark_dims:
+    input:
+        expand("output/in_silico/VISOR/{benchmark}/haps/{hap}.fa.fai", allow_missing = True, hap = ['h1', 'h2'])
+    output:
+        haplochroms = "output/in_silico/VISOR/{benchmark}/haplochroms.dim.tsv",
+        maxdims = "output/in_silico/VISOR/{benchmark}/maxdims.tsv"
+    conda:
+        "VISOR"
+    params:
+        hapsdir = lambda wildcards, input: os.path.dirname(input[0])
+    threads: 1
+    shell:
+        """
+        cat {input} | cut -f1,2 - > {output.haplochroms}
+        cat {output.haplochroms} | sort  | awk '$2 > maxvals[$1] {{lines[$1]=$0; maxvals[$1]=$2}} END {{ for (tag in lines) print lines[tag] }}' > {output.maxdims}
+        """
+
+rule generate_alu_dims:
+    input:
+        "output/in_silico/VISOR/alu/haps/h1.fa.fai"
+    output:
+        haplochroms = "output/in_silico/VISOR/{benchmark}/haplochroms.dim.tsv",
+        maxdims = "output/in_silico/VISOR/{benchmark}/maxdims.tsv"
+    conda:
+        "VISOR"
+    params:
+        hapsdir = lambda wildcards, input: os.path.dirname(input[0])
+    threads: 1
+    shell:
+        """
+        cat {input} | cut -f1,2 - > {output.haplochroms}
+        cat {output.haplochroms} | sort  | awk '$2 > maxvals[$1] {{lines[$1]=$0; maxvals[$1]=$2}} END {{ for (tag in lines) print lines[tag] }}' > {output.maxdims}
+        """
+
+rule generate_laser_bed:
+    input:
+        "output/in_silico/VISOR/{benchmark}/maxdims.tsv"
+    output:
+        "output/in_silico/VISOR/{benchmark}/laser.af_{af}.bed"
+    conda:
+        "VISOR"
+    params:
+        normal = lambda wildcards: 100 - float(wildcards.af)
+    threads: 1
+    shell:
+        """
+        # assumes uniform spike-in across all chromosomes
+        awk 'OFS=FS="\t"''{{print $1, "1", $2, "100.0", "{params.normal}"}}' {input} > {output}
+        """
+
+rule run_alu_laser:
+    input:
+        haps = "output/in_silico/VISOR/alu/haps/h1.fa",
+        bed = "output/in_silico/VISOR/alu/laser.af_6.67.bed",
+        error_model = "code/Badread/badread/error_models/pacbio2021.gz",
+        qscore_model = "code/Badread/badread/qscore_models/pacbio2021.gz"
+    output:
+        expand("output/in_silico/VISOR/alu/laser.af_6.67/sim.srt.{ext}", allow_missing = True, ext = ["bam", "bai"])
+    params:
+        hapsdir = lambda wildcards, input: os.path.dirname(input.haps),
+        refgenome = config["reference"]["fasta"].strip('.gz'),
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
+        coverage = 2,
+        length_mean = 16000,
+        length_stdev = 2000,
+    conda:
+        "VISOR"
+    threads: 56
+    shell:
+        """
+        rm -r {params.outdir} # prevents flagged error
+        VISOR LASeR \
+        -g {params.refgenome} \
+        -s {params.hapsdir} \
+        -b {input.bed} \
+        -o {params.outdir} \
+        --threads {threads} \
+        --coverage {params.coverage} \
+        --length_mean {params.length_mean} \
+        --length_stdev {params.length_stdev} \
+        --error_model {input.error_model} \
+        --qscore_model {input.qscore_model} \
+        --read_type pacbio \
+        --tag --fastq --compress
+        """
+
+rule run_benchmark_laser:
+    # Run in parallel and merge, otherwise performance is prohibitively slow.
+    input:
+        haps = expand("output/in_silico/VISOR/{benchmark}/haps/{haplotype}.fa", allow_missing = True, haplotype = ["h1", "h2"]),
+        bed = "output/in_silico/VISOR/{benchmark}/laser.af_{af}.bed",
+        error_model = "code/Badread/badread/error_models/pacbio2021.gz",
+        qscore_model = "code/Badread/badread/qscore_models/pacbio2021.gz"
+    output:
+        expand("output/in_silico/VISOR/{benchmark}/laser.af_{af}/sim.srt.{ext}", allow_missing = True, ext = ["bam", "bai"])
+    params:
+        hapsdir = lambda wildcards, input: os.path.dirname(input.haps[0]),
+        refgenome = config["reference"]["fasta"].strip('.gz'),
+        outdir = lambda wildcards, output: os.path.dirname(output[0]),
+        coverage = 50,
+        length_mean = 16000,
+        length_stdev = 2000,
+    conda:
+        "VISOR"
+    threads: 28
+    shell:
+        """
+        VISOR LASeR \
+        -g {params.refgenome} \
+        -s {params.hapsdir} \
+        -b {input.bed} \
+        -o {params.outdir} \
+        --threads {threads} \
+        --coverage {params.coverage} \
+        --length_mean {params.length_mean} \
+        --length_stdev {params.length_stdev} \
+        --error_model {input.error_model} \
+        --qscore_model {input.qscore_model} \
+        --read_type pacbio \
+        --tag --fastq --compress
+        """
+        

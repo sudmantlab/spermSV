@@ -1,0 +1,13 @@
+name: biopython
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - python
+  - pandas
+  - samtools
+  - seqtk
+  - bedtools
+  - bcftools
+  - biopython
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/biopython
