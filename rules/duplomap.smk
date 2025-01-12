@@ -11,7 +11,7 @@ rule duplomap:
         outdir = lambda wildcards, output: os.path.dirname(output[0]),
     conda:
         "../envs/mapping.yml"
-    threads: 8
+    threads: 14
     shell:
         """
         duplomap -@ {threads} \
@@ -25,7 +25,7 @@ rule duplomap_index:
         "output/alignment/{refalias}/{mapper}/duplomap/mapped/{specimen}/realigned.bam"
     output:
         "output/alignment/{refalias}/{mapper}/duplomap/mapped/{specimen}/realigned.bam.bai"
-    threads: 8
+    threads: 10
     conda: "../envs/mapping.yml"
     shell: 
         """

@@ -1,0 +1,34 @@
+executor: slurm
+jobs: 20
+printshellcmds: True
+default-resources: 
+  slurm_account: 'co_genomicdata'
+  slurm_partition: 'savio3_htc'
+  qos: 'genomicdata_htc3_normal'
+  mem_mb: f"{attempt * 24000}"
+  runtime: 4320
+set-resources:
+  hifiasm:
+    mem_mb: f"{attempt * 128000}"
+    runtime: 16800
+  hifiasm_900:
+    mem_mb: f"{attempt * 128000}"
+    runtime: 16800
+  minimap2:
+    mem_mb: f"{attempt * 48000}"
+  minimap2_to_hg38_scaffolded:
+    mem_mb: f"{attempt * 48000}"
+  minimap2_to_T2T_scaffolded:
+    mem_mb: f"{attempt * 48000}"
+  duplomap:
+    mem_mb: f"{attempt * 48000}"
+  subset_training:
+    mem_mb: f"{attempt * 48000}"
+  training2paf:
+    mem_mb: f"{attempt * 48000}"
+  multimap_analysis:
+    mem_mb: f"{attempt * 48000}"
+  train_error_model:
+    mem_mb: f"{attempt * 128000}"
+  train_qscore_model:
+    mem_mb: f"{attempt * 128000}"

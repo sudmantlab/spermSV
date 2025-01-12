@@ -1,0 +1,10 @@
+executor: slurm
+jobs: 10
+printshellcmds: True
+default-resources: 
+  slurm_account: 'co_genomicdata'
+  slurm_partition: 'savio4_htc'
+  qos: 'genomicdata_htc4_normal'
+  runtime: 4320
+  slurm_extra: "'--mail-type=ALL \
+                --mail-user=stacy-l+savio@berkeley.edu'"

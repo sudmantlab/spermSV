@@ -214,10 +214,10 @@ rule filter_dipcall_benchmark_SVs:
         tabix {output.homozygous}
         """
 
-use rule filter_dipcall_benchmark_SVs as filter_CMRG_benchmark_SVs with:
+rule filter_CMRG_benchmark_SVs:
     # This rule uses the Wagner 2022 SV benchmark VCF file, splitting it by haplotype and filtering as above.
     input:
-        vcf = "benchmarks/HG002/GRCh38_HG2-T2TQ100-V1.0.vcf.gz"
+        vcf = "benchmarks/HG002/HG002_GRCh38_CMRG_SV_v1.00.vcf.gz"
     output:
         maternal = "benchmarks/HG002/MATERNAL_HG002_GRCh38_CMRG_SV_v1.00.vcf.gz",
         maternal_index = "benchmarks/HG002/MATERNAL_HG002_GRCh38_CMRG_SV_v1.00.vcf.gz.tbi",
@@ -228,6 +228,22 @@ use rule filter_dipcall_benchmark_SVs as filter_CMRG_benchmark_SVs with:
     conda: "../envs/truvari.yml"
     params:
         outdir = lambda wildcards, output: os.path.dirname(output[0])
+    shell:
+        """
+        mkdir -p {params.outdir}
+
+        # Get maternal callset
+        bcftools filter -i 'INFO/BREAKSIMLENGTH >= 50 & GT=="0|1"' {input.vcf} -o {output.maternal} -O z9
+        tabix {output.maternal}
+
+        # Get paternal callset
+        bcftools filter -i 'INFO/BREAKSIMLENGTH >= 50 & GT=="1|0"' {input.vcf} -o {output.paternal} -O z9
+        tabix {output.paternal}
+
+        # Get homozygous callset
+        bcftools filter -i 'INFO/BREAKSIMLENGTH >= 50 & GT=="1|1"' {input.vcf} -o {output.homozygous} -O z9
+        tabix {output.homozygous}
+        """
 
 rule disambiguate_T2T_self_mapped:
     # This rule takes in the BAM of {hap} phased reads mapped to self and removes reads that are mapped to both haplotypes.'
@@ -759,11 +775,11 @@ rule check_multi_hap_SVs:
 rule truvari_consistency:
     input:
         # replace baseline with all merged cross hap SV reads from benchmark being thrown in to matched hap bg
-        baseline = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_standard/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/agg_{hap1}_spike_to_{hap2}/callset.vcf.gz",
-        spiked = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz"
+        baseline = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_standard/{hap1}_to_{hap2}/{hap1}_to_{hap2}.vcf.gz",
+        spiked = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_mosaic/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/callset.vcf.gz"
     output:
-        tsv = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/spiked_consistency.tsv",
-        json = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_{setting}/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/spiked_consistency.json"
+        tsv = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_mosaic/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/spiked_consistency.tsv",
+        json = "output/alignment/HG002/minimap2/standard/variants/simulation/sniffles_mosaic/{benchmark}_{hap1}_benchmark/{hap1}_spike_to_{hap2}/{n}_{hap1}_spike_to_{hap2}/spiked_consistency.json"
     wildcard_constraints:
         hap1 = '[A-Za-z]+',
         hap2 = '[A-Za-z]+'
@@ -795,3 +811,32 @@ rule truvari_consistency:
 #     threads: 1
 #     params:
 #         outdir = lambda wildcards, output: os.path.dirname(output[0])
+
+
+rule benchmark_liftovervcf:
+    input:
+        vcf = "benchmarks/HG002/{benchmark}.vcf.gz",
+        dict = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1_{hap}.dict"
+    output:
+        vcf = "benchmarks/HG002/liftover/{benchmark}.to_HG002_{hap}.vcf.gz",
+        tbi = "benchmarks/HG002/liftover/{benchmark}.to_HG002_{hap}.vcf.gz.tbi",
+        rejected = "benchmarks/HG002/liftover/{benchmark}.to_HG002_{hap}.rejected.vcf.gz",
+    wildcard_constraints:
+        hap = '[A-Za-z]+'
+    params:
+        ref = "/global/scratch/users/stacy-l/references/HG002/hg002v1.0.1_{hap}.fasta",
+        chain = "/global/scratch/users/stacy-l/references/HG002/GRCh38_to_hg002v1.0.{hap}.chain"
+    threads: 1
+    conda: "../envs/gatk.yml"
+    log: "logs/benchmarks/HG002/liftover/{benchmark}.to_HG002_{hap}.log"
+    shell:
+        """
+        picard -Xmx3G LiftoverVcf \
+        -I {input.vcf} \
+        -O {output.vcf} \
+        -C {params.chain} \
+        --REJECT {output.rejected} \
+        --CREATE_INDEX true \
+        -R {params.ref} \
+        --VERBOSITY DEBUG 2> {log}
+        """

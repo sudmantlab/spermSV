@@ -1,0 +1,16 @@
+name: smrest
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python==3.12.0
+  - pandas
+  - snakemake-minimal
+  - rust
+  - uv
+  - samtools
+  - bcftools
+  - bedtools
+  - whatshap
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/smrest

@@ -20,56 +20,44 @@ rule uBAMtoFastq:
     input:
         "data/PacBio-HiFi/{specimen}/{lane}/{smrtcell}.ccs.bam"
     output:
-        temp("output/preprocessing/uBAMtoFastq/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz")
-    wildcard_constraints:
-        lane="[^placeholder_for_rahbari_data]"
+        "output/preprocessing/uBAMtoFastq/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz"
     conda: "../envs/preprocessing.yml"
     threads: 10
     shell:
-        # extremely janky workaround right now because the savio module of samtools is OLD but also unremovable from my path rn
-        # without forcing it like below
-        # https://unix.stackexchange.com/questions/108873/removing-a-directory-from-path
-        # there's some WEIRD SHIT going on right now where there's conda (???) default on savio in this path
-        # what is HAPPENING
-        # /global/software/sl-7.x86_64/modules/langs/python/3.9/envs
         """
-        export PATH=`echo $PATH | tr ":" "\n" | grep -v "sl-7.x86_64" | tr "\n" ":"`
         samtools fastq -@ {threads} -c 6 -T MM,ML {input} -0 {output}
         """
 
+# rule HiFiAdapterFilt:
+#     # Notes:
+#     # This script must be executed from within the input file directory.
+#     # It *can* write outputs to a specified directory
+#     # Thus, values for below params are determined "dynamically" from input/output paths,
+#     # in order to guard against issues arising from input/output path restructuring.
+#     # For example, the below params evaluate to:
+#     # outDir = 'output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}'
+#     # inDir = 'data/PacBio-HiFi/{specimen}/{lane}'
+#     # inPref ='{smrtcell}.ccs'
+#     input: 
+#         "output/preprocessing/uBAMtoFastq/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz"
+#     output:
+#         "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.fastq.gz"
+#     log: "logs/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.log"
+#     params:
+#         # outDir = lambda wildcards, output: os.path.dirname(output[0]),
+#         # inDir = lambda wildcards, output: os.path.dirname(input[0]),
+#         # inPref = lambda wildcards, output: re.sub('(?<=ccs).*', '', os.path.basename(input[0])),
+#         outDir = "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}",
+#         inDir = "output/preprocessing/uBAMtoFastq/{specimen}/{lane}",
+#         inPref = "{smrtcell}.ccs"
+#     conda: "../envs/preprocessing.yml"
+#     threads: 10
+#     shell: 
+#         """
+#         export PATH=`echo $PATH | tr ":" "\n" | grep -v "sl-7.x86_64" | tr "\n" ":"`
 
-rule HiFiAdapterFilt:
-    # Notes:
-    # This script must be executed from within the input file directory.
-    # It *can* write outputs to a specified directory
-    # Thus, values for below params are determined "dynamically" from input/output paths,
-    # in order to guard against issues arising from input/output path restructuring.
-    # For example, the below params evaluate to:
-    # outDir = 'output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}'
-    # inDir = 'data/PacBio-HiFi/{specimen}/{lane}'
-    # inPref ='{smrtcell}.ccs'
-    input: 
-        "output/preprocessing/uBAMtoFastq/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz"
-    output:
-        "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.fastq.gz"
-    wildcard_constraints:
-        lane="[^placeholder_for_rahbari_data]"
-    log: "logs/preprocessing/HiFiAdapterFilt/{specimen}/{lane}/{smrtcell}.ccs.filt.log"
-    params:
-        # outDir = lambda wildcards, output: os.path.dirname(output[0]),
-        # inDir = lambda wildcards, output: os.path.dirname(input[0]),
-        # inPref = lambda wildcards, output: re.sub('(?<=ccs).*', '', os.path.basename(input[0])),
-        outDir = "output/preprocessing/HiFiAdapterFilt/{specimen}/{lane}",
-        inDir = "output/preprocessing/uBAMtoFastq/{specimen}/{lane}",
-        inPref = "{smrtcell}.ccs"
-    conda: "../envs/preprocessing.yml"
-    threads: 10
-    shell: 
-        """
-        export PATH=`echo $PATH | tr ":" "\n" | grep -v "sl-7.x86_64" | tr "\n" ":"`
-
-        ROOTPROJDIR=$(pwd -P)
-        cd {params.inDir}
-        pbadapterfilt.sh -p {params.inPref} -t {threads} -o $ROOTPROJDIR/{params.outDir} &> $ROOTPROJDIR/{log}
-        cd -
-        """
+#         ROOTPROJDIR=$(pwd -P)
+#         cd {params.inDir}
+#         pbadapterfilt.sh -p {params.inPref} -t {threads} -o $ROOTPROJDIR/{params.outDir} &> $ROOTPROJDIR/{log}
+#         cd -
+#         """

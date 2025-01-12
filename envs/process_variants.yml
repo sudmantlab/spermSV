@@ -12,6 +12,7 @@ dependencies:
   - pysam
   - sniffles==2.2
   - trgt==0.7.0
+  - cyvcf2
   # required for trgt outside of conda mgmt
   # cvbio depends on openjdk version pin
   # - openjdk==11.0.15

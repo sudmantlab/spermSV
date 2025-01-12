@@ -1,0 +1,12 @@
+name: hifiasm_debug
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - hifiasm=0.20.0
+  - purge_dups=1.2.6
+  - blast
+  - bamtools
+  - gfatools
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/hifiasm_debug

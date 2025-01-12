@@ -21,7 +21,9 @@ rule hifiasm:
         ovlp_source = "output/assembly/hifiasm/{specimen}/{specimen}.asm.ovlp.source.bin"
     params:
         prefix = "output/assembly/hifiasm/{specimen}/{specimen}.asm"
-    threads: 40
+    wildcard_constraints:
+        specimen = "[A-Za-z0-9]+"
+    threads: 14
     log: 
         "logs/assembly/hifiasm/{specimen}/{specimen}.asm.log"
     conda: 
@@ -31,10 +33,42 @@ rule hifiasm:
         hifiasm -o {params.prefix} -t {threads} {input} > {log} 2>&1
         """
 
+use rule hifiasm as hifiasm_900 with:
+    # a fix for sample 900, which fails from OOM issues from too much data(?)
+    input:
+        "output/preprocessing/uBAMtoFastq/900/PBmixRevio1489_2_D01_PFTP_30hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2026_CCSExpressIndex/m84139_231209_045828_s4.hifi_reads.bc2026.ccs.fastq.gz",
+        "output/preprocessing/uBAMtoFastq/900/PBmixRevio1489_2_C01_PFTP_30hours_22kbExpressCCSv32hrPE_200pM_HumanSudmant8900_bc2026_CCSExpressIndex/m84139_231209_042722_s3.hifi_reads.bc2026.ccs.fastq.gz"
+    output: 
+        p_ctg_hap1 = "output/assembly/hifiasm/900/900.asm.bp.hap1.p_ctg.gfa",
+        p_ctg_hap1_lowQ = "output/assembly/hifiasm/900/900.asm.bp.hap1.p_ctg.lowQ.bed",
+        p_ctg_hap1_noseq = "output/assembly/hifiasm/900/900.asm.bp.hap1.p_ctg.noseq.gfa",
+        p_ctg_hap2 = "output/assembly/hifiasm/900/900.asm.bp.hap2.p_ctg.gfa",
+        p_ctg_hap2_lowQ = "output/assembly/hifiasm/900/900.asm.bp.hap2.p_ctg.lowQ.bed",
+        p_ctg_hap2_noseq = "output/assembly/hifiasm/900/900.asm.bp.hap2.p_ctg.noseq.gfa",
+        p_ctg = "output/assembly/hifiasm/900/900.asm.bp.p_ctg.gfa",
+        p_ctg_lowQ = "output/assembly/hifiasm/900/900.asm.bp.p_ctg.lowQ.bed",
+        p_ctg_noseq = "output/assembly/hifiasm/900/900.asm.bp.p_ctg.noseq.gfa",
+        p_utg = "output/assembly/hifiasm/900/900.asm.bp.p_utg.gfa",
+        p_utg_lowQ = "output/assembly/hifiasm/900/900.asm.bp.p_utg.lowQ.bed",
+        p_utg_noseq = "output/assembly/hifiasm/900/900.asm.bp.p_utg.noseq.gfa",
+        r_utg = "output/assembly/hifiasm/900/900.asm.bp.r_utg.gfa",
+        r_utg_lowQ = "output/assembly/hifiasm/900/900.asm.bp.r_utg.lowQ.bed",
+        r_utg_noseq = "output/assembly/hifiasm/900/900.asm.bp.r_utg.noseq.gfa",
+        ec = "output/assembly/hifiasm/900/900.asm.ec.bin",
+        ovlp_reverse = "output/assembly/hifiasm/900/900.asm.ovlp.reverse.bin",
+        ovlp_source = "output/assembly/hifiasm/900/900.asm.ovlp.source.bin"
+    params:
+        prefix = "output/assembly/hifiasm/900/900.asm"
+    log: 
+        "logs/assembly/hifiasm/900/900.asm.log"
+
 rule gfaToFa:
     input: "output/assembly/hifiasm/{specimen}/{specimen}.asm.bp.{hap}.p_ctg.gfa"
     output: "output/assembly/hifiasm/{specimen}/{specimen}.{hap}.fa"
+    wildcard_constraints:
+        specimen = "[A-Za-z0-9]+"
     log: "logs/assembly/hifiasm/{specimen}/{specimen}.{hap}.fa.log"
+    threads: 1
     conda: "../envs/HiFiAssembly.yml"
     shell: 
         "gfatools gfa2fa {input} > {output} 2> {log}"
@@ -45,66 +79,99 @@ rule quast_raw:
         "output/assembly/hifiasm/{specimen}/{specimen}.hap2.fa"
     output:
         "output/assembly/hifiasm/{specimen}/quast/raw/report.html"
+    wildcard_constraints:
+        specimen = "[A-Za-z0-9]+"
     conda:
         "../envs/assembly_qc.yml"
-    threads: 10
+    threads: 6
     params:
-        refgenome = config['reference']['fasta'],
         outdir = "output/assembly/hifiasm/{specimen}/quast/raw"
     shell:
         """
-        quast.py {input} -r {params.refgenome} \
+        quast.py {input} \
         -o {params.outdir} \
-        --large --no-icarus --fragmented
+        --large --est-ref-size 3100000000 --no-icarus
         """
 
-rule ragtag_scaffold:
+rule ragtag_hg38_scaffold:
     input:
         "output/assembly/hifiasm/{specimen}/{specimen}.{hap}.fa"
     output:
-        expand("output/assembly/hifiasm/{specimen}/{specimen}.{hap}.scaffold.{ext}", allow_missing = True, ext = ["agp", "stats", "asm.paf", "asm.paf.log", "confidence.txt", "err"]),
-        temp("output/assembly/hifiasm/{specimen}/{specimen}.{hap}.scaffold.temp.fasta")
+        fasta = "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{specimen}.{hap}.scaffold.fasta"
+    wildcard_constraints:
+        specimen = "[A-Za-z0-9]+"
     conda:
         "../envs/assembly_qc.yml"
     threads: 10
     params:
-        refgenome = config['reference']['fasta'],
-        outdir = "output/assembly/hifiasm/{specimen}/scaffolded/{hap}"
+        refgenome = config['reference']['fasta_uncompressed'],
+        outdir = "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}"
     shell:
         """
         mkdir -p {params.outdir}
-        ragtag.py scaffold {params.refgenome} {input} \
-        -u --mm2-params='-t {threads} -x asm5 --eqx --cs' \
+
+        ragtag.py scaffold {params.refgenome} \
+        {input} \
+        -u -w --aligner minimap2 -t {threads} \
         -o {params.outdir}
 
-        for file in {params.outdir}/ragtag.scaffold.*; do
-            new_name="${{file/ragtag.scaffold/{wildcards.specimen}.{wildcards.hap}}}"
-            mv "$file" "${{new_name/scaffolded\/{wildcards.hap}\//}}"
-        done
+        # Rename the ragtag output files to include specimen and hap info
+        find {params.outdir} -name "ragtag.scaffold.*" \
+        -exec sh -c 'for f do dir=$(dirname "$f"); \
+        base=$(basename "$f"); suffix=${{base#ragtag.scaffold.}}; \
+        mv "$f" "$dir/{wildcards.specimen}.{wildcards.hap}.scaffold.$suffix"; \
+        done' sh {{}} +
+
+        # Modify all FASTA headers to include hap information
+        sed -i 's/_RagTag$/_RagTag_{wildcards.hap}/' {output.fasta}
         """
 
-rule rename_scaffolded_ctgs:
+use rule ragtag_hg38_scaffold as ragtag_T2T_scaffold with:
     input:
-        "output/assembly/hifiasm/{specimen}/{specimen}.{hap}.scaffold.temp.fasta"
+        "output/assembly/hifiasm/{specimen}/{specimen}.{hap}.fa"
     output:
-        "output/assembly/hifiasm/{specimen}/{specimen}.{hap}.scaffold.fasta"
-    shell:
-        """
-        sed 's/>\(.*\)_RagTag/>\\1_RagTag_{wildcards.hap}/' {input} > {output}
-        """
-
-use rule quast_raw as quast_scaffolded with:
-    input:
-        "output/assembly/hifiasm/{specimen}/{specimen}.hap1.scaffold.fasta",
-        "output/assembly/hifiasm/{specimen}/{specimen}.hap2.scaffold.fasta"
-    output:
-        "output/assembly/hifiasm/{specimen}/quast/scaffolded/report.html"
+        fasta = "output/assembly/hifiasm/{specimen}/T2T_scaffolded/{hap}/{specimen}.{hap}.scaffold.fasta"
+    wildcard_constraints:
+        specimen = "[A-Za-z0-9]+"
     conda:
         "../envs/assembly_qc.yml"
     threads: 10
     params:
-        refgenome = config['reference']['fasta'],
-        outdir = "output/assembly/hifiasm/{specimen}/quast/scaffolded"
+        refgenome = "/global/scratch/users/stacy-l/references/T2T_CHM13/hs1.fa",
+        outdir = "output/assembly/hifiasm/{specimen}/T2T_scaffolded/{hap}"
+
+use rule quast_raw as quast_scaffolded with:
+    input:
+        "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/hap1/{specimen}.hap1.scaffold.fasta",
+        "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/hap2/{specimen}.hap2.scaffold.fasta"
+    output:
+        "output/assembly/hifiasm/{specimen}/quast/{ref}_scaffolded/report.html"
+    wildcard_constraints:
+        specimen = "[A-Za-z0-9]+"
+    conda:
+        "../envs/assembly_qc.yml"
+    threads: 6
+    params:
+        outdir = "output/assembly/hifiasm/{specimen}/quast/{ref}_scaffolded"
+
+rule cat_scaffolds:
+    input:
+        "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/hap1/{specimen}.hap1.scaffold.fasta",
+        "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/hap2/{specimen}.hap2.scaffold.fasta"
+    output:
+        fa = "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/{specimen}.diploid.fasta",
+        fai = "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/{specimen}.diploid.fasta.fai"
+    wildcard_constraints:
+        specimen = "[A-Za-z0-9]+"
+    threads: 1
+    conda:
+        "../envs/mapping.yml"
+    shell:
+        """
+        cat {input} > {output.fa}
+        samtools faidx {output.fa}
+        """
+
 
 rule minigraph_cactus_pangenome:
     # Need to run snakemake with --use-singularity --singularity-args "--fakeroot --writable-tmpfs"

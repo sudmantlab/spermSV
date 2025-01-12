@@ -9,8 +9,6 @@
 rule make_bam_symlink:
     input:
         "/global/scratch/users/stacy-l/spermSV/globus_data/{lane}/{smrtcell}.bam"
-    wildcard_constraints:
-        lane="[^placeholder]"
     output:
         "data/PacBio-HiFi/{specimen}/{lane}/{smrtcell}.ccs.bam"
     shell:
@@ -21,8 +19,6 @@ rule make_bam_symlink:
 rule make_fastq_symlink:
     input:
         "/global/scratch/users/stacy-l/spermSV/globus_data/{lane}/{smrtcell}.fastq.gz"
-    wildcard_constraints:
-        lane="[^placeholder]"
     output:
         "data/PacBio-HiFi/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz"
     shell:

@@ -1,0 +1,16 @@
+name: spermSV_update
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  # set up a base analysis environment with only core packages
+  - samtools
+  - bedtools
+  - seqtk
+  - pybind11
+  - python>=3.9
+  - numpy
+  - pandas
+  - snakemake-minimal
+  - snakemake-executor-plugin-slurm
+prefix: /global/scratch/users/stacy-l/miniconda3/envs/spermSV_update
