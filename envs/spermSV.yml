@@ -5,12 +5,12 @@ channels:
 dependencies:
   # set up a base analysis environment with only core packages
   - samtools
-  - bedtools==2.31.1
+  - bedtools
   - seqtk
   - pybind11
-  # - vcflib==1.0.10 # not be available on bioconda yet... manual install from source
-  - python>=3.9
+  - python>=3.12
   - numpy
   - pandas
   - snakemake-minimal
+  - snakemake-executor-plugin-slurm
 prefix: /global/scratch/users/stacy-l/miniconda3/envs/spermSV

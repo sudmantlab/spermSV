@@ -22,11 +22,21 @@ set-resources:
     mem_mb: f"{attempt * 48000}"
   duplomap:
     mem_mb: f"{attempt * 48000}"
-  subset_training:
+  hprc_vg_index:
+    mem_mb: f"{attempt * 256000}"
+  hprc_vg_giraffe_align:
+    mem_mb: f"{attempt * 96000}"
+  hprc_vg_surject:
     mem_mb: f"{attempt * 48000}"
-  training2paf:
+  hprc_personalized_graph_index:
     mem_mb: f"{attempt * 48000}"
-  train_error_model:
-    mem_mb: f"{attempt * 128000}"
-  train_qscore_model:
-    mem_mb: f"{attempt * 128000}"
+  hprc_personalized_kmer_counting:
+    mem_mb: 152000
+  hprc_personalized_haplotype_sampling:
+    mem_mb: f"{attempt * 48000}"
+  hprc_personalized_graph_construction:
+    mem_mb: f"{attempt * 60000}"
+  hprc_personalized_haplotype_mapping:
+    mem_mb: f"{attempt * 96000}"
+  repeatmasker_scaffolded:
+    mem_mb: f"{attempt * 64000}"

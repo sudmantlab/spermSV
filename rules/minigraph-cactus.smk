@@ -1,4 +1,4 @@
-localrules: convert_repeat_bed_hprc
+localrules: convert_hg38_repeat_bed_hprc, convert_CHM13_repeat_bed_hprc
 
 rule hprc_personalized_gbwt:
     input:
@@ -21,7 +21,8 @@ rule hprc_personalized_gbwt:
         {params.bind_paths} \
         --home $(dirname {input.gbz}) \
         {params.container} \
-        vg gbwt -p -r {output.ri} -Z {input.gbz}) 2> {log}
+        vg gbwt --num-threads {threads} \
+        -p -r {output.ri} -Z {input.gbz}) 2> {log}
         """
 
 rule hprc_personalized_haplotype_sampling:
@@ -46,7 +47,9 @@ rule hprc_personalized_haplotype_sampling:
         {params.bind_paths} \
         --home $(dirname {input.gbz}) \
         {params.container} \
-        vg haplotypes -v 2 -H {output.haplotypes} -r {input.ri} {input.gbz}) 2> {log}
+        vg haplotypes --threads {threads} \
+        -v 2 -H {output.haplotypes} \
+        -r {input.ri} {input.gbz}) 2> {log}
         """
 
 def get_fastas_per_sample(wildcards, sample_table = config['sample_table']) -> List:
@@ -124,8 +127,11 @@ rule hprc_personalized_graph_construction:
         {params.bind_paths} \
         --home {params.home} \
         {params.container} \
-        vg haplotypes -v 2 --include-reference --diploid-sampling \
-        -i {input.haplotypes} -k {input.kmer} -g {output.gbz} {input.gbz}) 2> {log}
+        vg haplotypes \
+        --threads {threads} \
+        -v 2 --include-reference --diploid-sampling \
+        -i {input.haplotypes} -k {input.kmer} \
+        -g {output.gbz} {input.gbz}) 2> {log}
         """
 
 rule hprc_personalized_graph_index:
@@ -133,6 +139,7 @@ rule hprc_personalized_graph_index:
         # download from HPRC
         gbz = "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.gbz"
     output:
+        "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.dist",
         "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.longread.zipcodes", 
         "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.longread.withzip.min"
     wildcard_constraints:
@@ -144,23 +151,27 @@ rule hprc_personalized_graph_index:
         home = config["workdir"],
         container = config["singularity"]["vg"]["container"],
         bind_paths = " ".join([f"-B {path}:{path}" for path in config["singularity"]["vg"]["bind_paths"]]),
-        singularity_args = config["singularity"]["vg"]["args"]
+        singularity_args = config["singularity"]["vg"]["args"],
     threads: 16
     shell:
         """
         (singularity exec {params.singularity_args} \
         {params.bind_paths} \
-        --home $(dirname {input.gbz}) \
+        --home {params.home}/$(dirname {input.gbz}) \
         {params.container} \
         vg autoindex --workflow lr-giraffe \
+        --threads {threads} \
         --prefix {wildcards.specimen} \
-        --gbz {input.gbz}) 2> {log}
+        --gbz $(basename {input.gbz})) 2> {log}
         """
 
 rule hprc_personalized_haplotype_mapping:
     input:
         gbz = "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.gbz",
-        fastq = "output/preprocessing/uBAMtoFastq/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz"
+        fastq = "output/preprocessing/uBAMtoFastq/{specimen}/{lane}/{smrtcell}.ccs.fastq.gz",
+        indices = ["output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.dist",
+        "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.longread.zipcodes", 
+        "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.longread.withzip.min"]
     output:
         gam = temp("output/alignment/hprc_personalized/mapped/{prefix}/temp/{specimen}/{lane}/{specimen}_{smrtcell}.mapped.gam"),
         report = "logs/alignment/hprc_personalized/mapped/{prefix}/temp/{specimen}/{lane}/{specimen}_{smrtcell}.mapped.report.tsv"
@@ -184,6 +195,7 @@ rule hprc_personalized_haplotype_mapping:
         vg giraffe -b hifi \
         -Z {input.gbz} \
         -f {input.fastq} \
+        --threads {threads} \
         --report-name {output.report} \
         -p > {output.gam}) 2> {log}
         """
@@ -229,7 +241,7 @@ rule hprc_personalized_surject:
         container = config["singularity"]["vg"]["container"],
         bind_paths = " ".join([f"-B {path}:{path}" for path in config["singularity"]["vg"]["bind_paths"]]),
         singularity_args = config["singularity"]["vg"]["args"]
-    threads: 16
+    threads: 18
     shell:
         """
         (singularity exec {params.singularity_args} \
@@ -237,6 +249,7 @@ rule hprc_personalized_surject:
         --home {params.home} \
         {params.container} \
         vg surject -b \
+        --threads {threads} \
         -x {input.gbz} \
         {input.gam} \
         --prune-low-cplx > {output.bam}) 2> {log}
@@ -264,13 +277,13 @@ rule hprc_surject_ref_fasta:
     input:
         gbz = "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.gbz"
     output:
-        fasta = "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.GRCh38.fasta"
+        fasta = "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.{ref}.fasta"
     wildcard_constraints:
         specimen = "[A-Za-z0-9]+",
         prefix = "[A-Za-z0-9\-\.]+",
     threads: 8
     log:
-        "logs/alignment/hprc_personalized/graphs/{prefix}/{specimen}.GRCh38.fasta.log"
+        "logs/alignment/hprc_personalized/graphs/{prefix}/{specimen}.{ref}.fasta.log"
     params:
         home = config["workdir"],
         container = config["singularity"]["vg"]["container"],
@@ -282,10 +295,10 @@ rule hprc_surject_ref_fasta:
         {params.bind_paths} \
         --home {params.home} \
         {params.container} \
-        vg paths --extract-fasta -x {input.gbz} --paths-by GRCh38 --threads {threads}> {output.fasta}) > {output.fasta} 2> {log}
+        vg paths --extract-fasta -x {input.gbz} --paths-by {wildcards.ref} --threads {threads}> {output.fasta}) > {output.fasta} 2> {log}
         """
 
-rule convert_repeat_bed_hprc:
+rule convert_hg38_repeat_bed_hprc:
     # Quick conversion of GRCh38 chr names (chr{n}) to graph-compatible names (GRCh38#0#chr{n})
     input:
         "/global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_simpleRepeat.bed"
@@ -296,17 +309,27 @@ rule convert_repeat_bed_hprc:
         sed 's/chr/GRCh38#0#chr/' {input} > {output}
         """
 
+rule convert_CHM13_repeat_bed_hprc:
+    # Quick conversion of CHM13 chr names (chr{n}) to graph-compatible names (CHM13#0#chr{n})
+    input:
+        "/global/scratch/users/stacy-l/references/T2T_CHM13/chm13v2.0_simpleRepeat.bed"
+    output:
+        "/global/scratch/users/stacy-l/references/HPRC/CHM13_simpleRepeat.bed"
+    shell:
+        """
+        sed 's/chr/CHM13#0#chr/' {input} > {output}
+        """
 
-rule hprc_sniffles_mosaic:
+rule hprc_sniffles_mosaic_hg38:
     input:
         bam = "output/alignment/hprc_personalized/mapped/{prefix}/{specimen}.surjected.bam",
         index = "output/alignment/hprc_personalized/mapped/{prefix}/{specimen}.surjected.bam.bai",
         fasta = "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.GRCh38.fasta",
         repeats = "/global/scratch/users/stacy-l/references/HPRC/GRCh38_simpleRepeat.bed"
     output:
-        vcf = "output/alignment/hprc_personalized/variants/{prefix}/sniffles_mosaic/{specimen}.vcf.gz"
+        vcf = "output/alignment/hprc_personalized/variants/{prefix}/sniffles_mosaic/hg38/{specimen}.vcf.gz"
     log:
-        "logs/alignment/hprc_personalized/variants/{prefix}/sniffles_mosaic/{specimen}.log"
+        "logs/alignment/hprc_personalized/variants/{prefix}/sniffles_mosaic/hg38/{specimen}.log"
     wildcard_constraints:
         specimen = "[A-Za-z0-9]+",
         prefix = "[A-Za-z0-9\-\.]+",
@@ -330,16 +353,27 @@ rule hprc_sniffles_mosaic:
         --dev-no-qc &> {log}
         """
 
-rule hprc_sniffles_mosaic_qc_all:
+use rule hprc_sniffles_mosaic_hg38 as hprc_sniffles_mosaic_CHM13 with:
+    input:
+        bam = "output/alignment/hprc_personalized/mapped/{prefix}/{specimen}.surjected.bam",
+        index = "output/alignment/hprc_personalized/mapped/{prefix}/{specimen}.surjected.bam.bai",
+        fasta = "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.CHM13.fasta",
+        repeats = "/global/scratch/users/stacy-l/references/HPRC/CHM13_simpleRepeat.bed"
+    output:
+        vcf = "output/alignment/hprc_personalized/variants/{prefix}/sniffles_mosaic/CHM13/{specimen}.vcf.gz"
+    log:
+        "logs/alignment/hprc_personalized/variants/{prefix}/sniffles_mosaic/CHM13/{specimen}.log"
+
+rule hprc_sniffles_mosaic_hg38_qc_all:
     input:
         bam = "output/alignment/hprc_personalized/mapped/{prefix}/{specimen}.surjected.bam",
         index = "output/alignment/hprc_personalized/mapped/{prefix}/{specimen}.surjected.bam.bai",
         fasta = "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.GRCh38.fasta",
         repeats = "/global/scratch/users/stacy-l/references/HPRC/GRCh38_simpleRepeat.bed"
     output:
-        vcf = "output/alignment/hprc_personalized/variants/{prefix}/sniffles_mosaic/{specimen}.qc_all.vcf.gz"
+        vcf = "output/alignment/hprc_personalized/variants/{prefix}/sniffles_mosaic/hg38/{specimen}.qc_all.vcf.gz"
     log:
-        "logs/alignment/hprc_personalized/variants/{prefix}/sniffles_mosaic/{specimen}.qc_all.log"
+        "logs/alignment/hprc_personalized/variants/{prefix}/sniffles_mosaic/hg38/{specimen}.qc_all.log"
     wildcard_constraints:
         specimen = "[A-Za-z0-9]+",
         prefix = "[A-Za-z0-9\-\.]+",
@@ -362,6 +396,17 @@ rule hprc_sniffles_mosaic_qc_all:
         --threads {threads} \
         --dev-no-qc &> {log}
         """
+
+use rule hprc_sniffles_mosaic_hg38_qc_all as hprc_sniffles_mosaic_CHM13_qc_all with:
+    input:
+        bam = "output/alignment/hprc_personalized/mapped/{prefix}/{specimen}.surjected.bam",
+        index = "output/alignment/hprc_personalized/mapped/{prefix}/{specimen}.surjected.bam.bai",
+        fasta = "output/alignment/hprc_personalized/graphs/{prefix}/{specimen}.CHM13.fasta",
+        repeats = "/global/scratch/users/stacy-l/references/HPRC/CHM13_simpleRepeat.bed"
+    output:
+        vcf = "output/alignment/hprc_personalized/variants/{prefix}/sniffles_mosaic/CHM13/{specimen}.qc_all.vcf.gz"
+    log:
+        "logs/alignment/hprc_personalized/variants/{prefix}/sniffles_mosaic/CHM13/{specimen}.qc_all.log"
 
 # rule chrom_graphs:
 #     # Need to run snakemake with --use-singularity --singularity-args "--fakeroot --writable-tmpfs"

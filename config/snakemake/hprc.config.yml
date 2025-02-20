@@ -1,0 +1,53 @@
+#############################
+### Project configuration ###
+#############################
+
+# Indicate working directory and metadata (sample) table
+# data is expected in the data/ folder relative to the working directory
+# need to write an "expected inputs/structure" doc for data/
+
+workdir: "/global/scratch/users/stacy-l/spermSV"
+sample_table: "/global/scratch/users/stacy-l/spermSV/config/snakemake/samples.tsv"
+
+##########################
+### Path configuration ###
+##########################
+
+# Specify paths to scripts, packages, and other tools not managed by conda
+# Working on helper functions for managing environmental $PATH as necessary.
+
+kmc:
+  path: "/global/scratch/users/stacy-l/software/kmc/bin/kmc"
+
+##########################
+### Singularity config###
+##########################
+
+# Specify container and common paths for bind mounts and Singularity args.
+
+singularity:
+  vg:
+    container: "docker://quay.io/vgteam/vg:v1.63.1"
+    bind_paths: ["/global/scratch/users/stacy-l/references/HPRC", "/global/scratch/users/stacy-l/spermSV"]
+    args: "--writable-tmpfs --containall"
+  minigraph-cactus:
+    container: "code/cactus/cactus_v2.8.1.sif"
+    bind_paths: ["/global/scratch/users/stacy-l/references/HPRC", "/global/scratch/users/stacy-l/references/hg38_HGSVC", "/global/scratch/users/stacy-l/spermSV"]
+    args: "--writable-tmpfs --containall"
+
+### Analysis config options ###
+###############################
+
+# Indicate genome + annotation files (.bed, .gff, etc)
+# The alias will be used for organizing mapping outputs:
+# for example, output/alignment/CHM13 or output/alignment/hg38_no_alts
+
+graph:
+  hg38:
+    full: 
+      gbz: "/global/scratch/users/stacy-l/references/HPRC/hprc-v1.1-mc-grch38.gbz"
+      prefix: "hprc-v1.1-mc-grch38"
+  CHM13:
+    full:
+      gbz: "/global/scratch/users/stacy-l/references/HPRC/hprc-v1.1-mc-chm13.gbz"
+      prefix: "hprc-v1.1-mc-chm13"

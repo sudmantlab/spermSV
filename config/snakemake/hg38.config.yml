@@ -27,7 +27,20 @@ paths:
     repo: "/global/scratch/users/stacy-l/spermSV/code/Sim-it"
   sequenceTubeMap:
     scripts: "/global/scratch/users/stacy-l/spermSV/code/sequenceTubeMap/scripts"
+  kmc:
+    path: "/global/scratch/users/stacy-l/software/kmc/bin/kmc"
 
+singularity:
+  vg:
+    container: "docker://quay.io/vgteam/vg:v1.63.1"
+    bind_paths: ["/global/scratch/users/stacy-l/references/HPRC", "/global/scratch/users/stacy-l/spermSV"]
+    args: "--writable-tmpfs --containall"
+  minigraph-cactus:
+    container: "code/cactus/cactus_v2.8.1.sif"
+    bind_paths: ["/global/scratch/users/stacy-l/references/HPRC", "/global/scratch/users/stacy-l/references/hg38_HGSVC", "/global/scratch/users/stacy-l/spermSV"]
+    args: "--writable-tmpfs --containall"
+
+###############################
 ### Analysis config options ###
 ###############################
 
@@ -54,6 +67,17 @@ reference:
       all: "/global/scratch/users/stacy-l/spermSV/benchmarks/HG002/liftovervcf/hg38/HG002_hg38_SVs_Tier1_v0.6_withChr.vcf.gz"
     cmrg:
       all: "/global/scratch/users/stacy-l/spermSV/benchmarks/HG002/liftover/HG002_GRCh38_CMRG_SV_v1.00.vcf.gz"
+graph:
+  hg38:
+    full: 
+      gbz: "/global/scratch/users/stacy-l/references/HPRC/hprc-v1.1-mc-grch38.gbz"
+      prefix: "hprc-v1.1-mc-grch38"
+  CHM13:
+    full:
+      gbz: "/global/scratch/users/stacy-l/references/HPRC/hprc-v1.1-mc-chm13.gbz"
+      prefix: "hprc-v1.1-mc-chm13"
+
+
 
 minimap2:
   readgroup: "@RG\\tID:{specimen}\\tSM:{specimen}\\tPL:PACBIO"
@@ -73,7 +97,7 @@ samtools:
   readgroup: "'@RG\\tID:{specimen}\\tSM:{specimen}\\tPL:PACBIO'"
 
 sniffles:
-  minsupport: 1
+  minsupport: 0
   mapq: 20
   mosaic-af-min: 0
   mosaic-af-max: 0.2
@@ -106,6 +130,3 @@ repeatmasker:
 
 pmdv:
   mapQ: 10
-
-singularity:
-  mount_dir: "/global/scratch/users/stacy-l"

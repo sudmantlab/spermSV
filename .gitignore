@@ -4,11 +4,10 @@ globus_data/
 
 # software/code folders, some of these are git versioned
 code/
-config/packages/duplomap
 
-# output & analysis folders
-output/
+# output & logs folders
 analysis/
+output/
 logs/
 
 # rule/DAG graphs generated while testing stuff
@@ -17,6 +16,9 @@ logs/
 
 # benchmarks are large and need to be backed up using a different method
 benchmarks/
+
+# various large files generated
+*.gff
 
 # caches
 .*

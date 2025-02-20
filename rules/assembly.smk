@@ -1,3 +1,5 @@
+localrules: repeatmasker_scaffolded_to_bed
+
 rule hifiasm:
     input: get_fastqs_per_sample
     output:
@@ -140,6 +142,87 @@ use rule ragtag_hg38_scaffold as ragtag_T2T_scaffold with:
         refgenome = "/global/scratch/users/stacy-l/references/T2T_CHM13/hs1.fa",
         outdir = "output/assembly/hifiasm/{specimen}/T2T_scaffolded/{hap}"
 
+rule update_scaffold_agp:
+    input:
+        "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{specimen}.{hap}.scaffold.agp"
+    output:
+        "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{specimen}.{hap}.scaffold.updated.agp"
+    shell:
+        """
+        awk -F'\t' '{{sub(/_RagTag$/, "_RagTag_{wildcards.hap}", $1);
+        print}}' OFS='\t' {input} > {output}
+        """
+
+rule paf2chain:
+    input:
+        "output/assembly/hifiasm/{specimen}/{scaffolded}/{hap}/{specimen}.{hap}.scaffold.asm.paf"
+    output:
+        temp("output/assembly/hifiasm/{specimen}/{scaffolded}/{hap}/{specimen}.{hap}.scaffold.chain")
+    threads: 1
+    shell:
+        """
+        code/paf2chain/target/release/paf2chain -i {input} > {output}
+        """
+
+rule update_chain:
+    input:
+        script = "scripts/python/update_chain.py",
+        chain = "output/assembly/hifiasm/{specimen}/{scaffolded}/{hap}/{specimen}.{hap}.scaffold.chain",
+        agp = "output/assembly/hifiasm/{specimen}/{scaffolded}/{hap}/{specimen}.{hap}.scaffold.updated.agp"
+    output:
+        chain = "output/assembly/hifiasm/{specimen}/{scaffolded}/{hap}/{specimen}.{hap}.scaffold.updated.chain"
+    threads: 1
+    shell:
+        """
+        python {input.script} {input.agp} {input.chain} {output.chain}
+        """
+
+rule liftover_hg38_annotations:
+    input:
+        bed = "/global/scratch/users/stacy-l/references/hg38_HGSVC/{file}.bed",
+        chain = "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{specimen}.{hap}.scaffold.updated.chain"
+    output:
+        mapped = "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{file}.bed.gz",
+        mapped_tbi = "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{file}.bed.gz.tbi",
+        unmapped = "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{file}.unmapped.bed.gz",
+        unmapped_tbi = "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{file}.unmapped.bed.gz.tbi"
+    conda:
+        "../envs/liftover.yml"
+    shell:
+        """
+        # Create temp uncompressed bed file paths
+        mapped_bed=$(echo {output.mapped} | sed 's/\.gz$//')
+        unmapped_bed=$(echo {output.unmapped} | sed 's/\.gz$//')
+
+        # Do not consider beyond first 12 columns of bed spec
+        cols=$(head -n1 {input.bed} | awk '{{print NF}}')
+        if [ "$cols" -gt 12 ]; then
+            liftOver {input.bed} {input.chain} "$mapped_bed" "$unmapped_bed" -bedPlus=12
+        else
+            liftOver {input.bed} {input.chain} "$mapped_bed" "$unmapped_bed"
+        fi
+
+        echo "Sorting bedfiles"
+        sort -k 1,1 -k2,2n "$mapped_bed" -o "$mapped_bed" 
+        sort -k 1,1 -k2,2n "$unmapped_bed" -o "$unmapped_bed"
+
+        echo "Gzipping bedfiles"
+        bgzip --force "$mapped_bed"
+        bgzip --force "$unmapped_bed"
+
+        echo "Indexing bedfiles"
+        tabix {output.mapped}
+        tabix {output.unmapped}
+        """
+
+use rule liftover_hg38_annotations as liftover_T2T_annotations with:
+    input:
+        bed = "/global/scratch/users/stacy-l/references/T2T_CHM13/{file}.bed",
+        chain = "output/assembly/hifiasm/{specimen}/T2T_scaffolded/{hap}/{specimen}.{hap}.scaffold.updated.chain"
+    output:
+        mapped = "output/assembly/hifiasm/{specimen}/T2T_scaffolded/{hap}/{file}.bed",
+        unmapped = "output/assembly/hifiasm/{specimen}/T2T_scaffolded/{hap}/{file}.unmapped.bed"
+
 use rule quast_raw as quast_scaffolded with:
     input:
         "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/hap1/{specimen}.hap1.scaffold.fasta",
@@ -172,26 +255,49 @@ rule cat_scaffolds:
         samtools faidx {output.fa}
         """
 
-
-rule minigraph_cactus_pangenome:
-    # Need to run snakemake with --use-singularity --singularity-args "--fakeroot --writable-tmpfs"
-    # Figure this out later
+rule repeatmasker_scaffolded:
     input:
-        config = "config/packages/minigraph-cactus/samples.txt"
+        "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/{specimen}.diploid.fasta",
     output:
-        "output/assembly/minigraph-cactus/svg.vcf.gz",
-        expand("output/assembly/minigraph-cactus/chrom-alignments/{chr}.vg", chr = chrs)
-    container:
-        "code/cactus/cactus_v2.8.1.sif"
-    threads: 40
+        out = "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/repeatmasker/{specimen}.diploid.fasta.out"
+    log:
+        "logs/assembly/hifiasm/{specimen}/{ref}_scaffolded/{specimen}.diploid.fasta.out.log"
+    conda:
+        "../envs/RepeatMasker.yml"
+    params:
+        engine = config['repeatmasker']['engine'],
+        species = config['repeatmasker']['species'],
+        outdir = "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/repeatmasker"
+    threads: 36
     shell:
         """
-        cactus-pangenome ./js \
-        {input.config} \
-        --outDir output/assembly/minigraph-cactus \
-        --outName svg \
-        --reference CHM13 hg38 \
-        --vcfReference CHM13 hg38 \
-        --refContigs $(for i in $(seq 22); do printf "chr$i "; done ; echo "chrX chrY chrM") \
-        --vcf --giraffe --gfa --gbz --vg
+        RepeatMasker -pa {threads} -engine {params.engine} -nocut -gff -species {params.species} -dir {params.outdir} {input} &> {log}
+        """
+
+rule repeatmasker_scaffolded_to_bed:
+    input:
+        "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/{specimen}.diploid.fasta.out"
+    output:
+        "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/{specimen}.diploid.fasta.bed"
+    threads: 1
+    shell:
+        """
+        awk 'BEGIN{{OFS="\t"}}NR>3 {{if($9=="C"){{strand="-"}}else{{strand="+"}}}}{{print $5,$6-1,$7,$10,".",strand}}' {input} > {output}
+        """
+
+rule svbyeye_alignment:
+    input:
+        "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{specimen}.{hap}.scaffold.fasta"
+    output:
+        "output/assembly/hifiasm/{specimen}/svbyeye/hg38_scaffolded/{specimen}.{hap}.paf"
+    wildcard_constraints:
+        specimen = "[A-Za-z0-9]+"
+    params:
+        refgenome = config['reference']['fasta']
+    threads: 10
+    conda:
+        "../envs/mapping.yml"
+    shell:
+        """
+        minimap2 -t {threads} -x asm20 -c --eqx --secondary=no {params.refgenome} {input} > {output}
         """

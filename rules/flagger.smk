@@ -22,8 +22,8 @@ use rule prepare_flagger_inputs as HG002_unscaffolded_prepare with:
         fasta = "output/assembly/hifiasm/HG002/HG002.unscaffolded.diploid.fa",
         fai = "output/assembly/hifiasm/HG002/HG002.unscaffolded.diploid.fa.fai"
     output:
-        bed = "output/assembly/flagger/unscaffolded/HG002_whole_genome.bed",
-        json = "output/assembly/flagger/unscaffolded/HG002_annotations_path.json"
+        bed = "output/assembly/flagger/HG002/unscaffolded/HG002_whole_genome.bed",
+        json = "output/assembly/flagger/HG002/unscaffolded/HG002_annotations_path.json"
 
 # Convert BAM to coverage file
 rule bam_to_coverage:

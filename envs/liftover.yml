@@ -4,4 +4,7 @@ channels:
   - conda-forge
 dependencies:
   - ucsc-liftover==447
+  - samtools
+  - bedtools
+  - bcftools
 prefix: /global/scratch/users/stacy-l/miniconda3/envs/liftover

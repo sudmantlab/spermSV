@@ -1,5 +1,5 @@
 hg38    /global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa
-CHM13   /global/scratch/users/stacy-l/references/T2T_CHM13/hs1.fa
+CHM13   /global/scratch/users/stacy-l/references/T2T_CHM13/chm13v2.0.fa.gz
 894.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/894/894.hap1.fa
 894.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/894/894.hap2.fa
 895.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/895/895.hap1.fa
@@ -8,8 +8,6 @@ CHM13   /global/scratch/users/stacy-l/references/T2T_CHM13/hs1.fa
 898.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/898/898.hap2.fa
 899.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/899/899.hap1.fa
 899.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/899/899.hap2.fa
-900.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/900/900.hap1.fa
-900.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/900/900.hap2.fa
 901.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/901/901.hap1.fa
 901.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/901/901.hap2.fa
 5619.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/5619/5619.hap1.fa
@@ -18,3 +16,19 @@ CHM13   /global/scratch/users/stacy-l/references/T2T_CHM13/hs1.fa
 5621.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/5621/5621.hap2.fa
 5980.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/5980/5980.hap1.fa
 5980.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/5980/5980.hap2.fa
+ASD6058.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/ASD6058/ASD6058.hap1.fa
+ASD6058.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/ASD6058/ASD6058.hap2.fa
+ASD6463.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/ASD6463/ASD6463.hap1.fa
+ASD6463.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/ASD6463/ASD6463.hap2.fa
+N22T.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/N22T/N22T.hap1.fa
+N22T.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/N22T/N22T.hap2.fa
+RG6P.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/RG6P/RG6P.hap1.fa
+RG6P.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/RG6P/RG6P.hap2.fa
+SY3L014.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/SY3L014/SY3L014.hap1.fa
+SY3L014.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/SY3L014/SY3L014.hap2.fa
+TSC6830.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/TSC6830/TSC6830.hap1.fa
+TSC6830.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/TSC6830/TSC6830.hap2.fa
+TSC7237.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/TSC7237/TSC7237.hap1.fa
+TSC7237.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/TSC7237/TSC7237.hap2.fa
+V4IC.1	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/V4IC/V4IC.hap1.fa
+V4IC.2	/global/scratch/users/stacy-l/spermSV/output/assembly/hifiasm/V4IC/V4IC.hap2.fa

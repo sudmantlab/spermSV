@@ -48,8 +48,8 @@ rule run_reference_hap_stats:
 
 rule combine_all_stats:
     input:
-        # This is a dummy input to trigger the rule
-        "output/assembly/assembly_stats/hg38.ref.tsv"
+        expand("output/assembly/assembly_stats/{specimen}.{hap}.tsv", specimen = [x for x in specimens if x != '901'], hap = ['hap1', 'hap2'])
+        # expand("output/assembly/assembly_stats/{specimen}.{hap}.tsv", specimen = glob_wildcards("output/assembly/assembly_stats/{specimen}.hap1.tsv").specimen, hap = ['hap1', 'hap2'])
     output:
         'output/assembly/assembly_stats/all.tsv'
     run:

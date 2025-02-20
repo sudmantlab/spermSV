@@ -5,6 +5,43 @@ default-resources:
   slurm_account: 'co_genomicdata'
   slurm_partition: 'savio4_htc'
   qos: 'genomicdata_htc4_normal'
-  runtime: 4320
-  slurm_extra: "'--mail-type=ALL \
-                --mail-user=stacy-l+savio@berkeley.edu'"
+  mem_mb: f"{attempt * 24000}"
+  runtime: 2400
+set-resources:
+  hifiasm:
+    mem_mb: f"{attempt * 128000}"
+    runtime: 16800
+  hifiasm_900:
+    mem_mb: f"{attempt * 128000}"
+    runtime: 16800
+  minimap2:
+    mem_mb: f"{attempt * 48000}"
+  minimap2_to_hg38_scaffolded:
+    mem_mb: f"{attempt * 48000}"
+  minimap2_to_T2T_scaffolded:
+    mem_mb: f"{attempt * 48000}"
+  duplomap:
+    mem_mb: f"{attempt * 48000}"
+  hprc_vg_index:
+    mem_mb: f"{attempt * 256000}"
+  hprc_vg_giraffe_align:
+    mem_mb: f"{attempt * 96000}"
+  hprc_vg_surject:
+    mem_mb: f"{attempt * 48000}"
+  hprc_personalized_graph_index:
+    mem_mb: f"{attempt * 96000}"
+  hprc_personalized_kmer_counting:
+    mem_mb: 152000
+  hprc_personalized_haplotype_sampling:
+    mem_mb: f"{attempt * 48000}"
+  hprc_personalized_graph_construction:
+    mem_mb: f"{attempt * 60000}"
+  hprc_personalized_haplotype_mapping:
+    mem_mb: f"{attempt * 96000}"
+  hprc_personalized_surject:
+    mem_mb: min(1.5 * input.size_mb, 256000)
+  repeatmasker_scaffolded:
+    threads: 56
+    mem_mb: 256000
+  svbyeye_alignment:
+    mem_mb: f"{attempt * 48000}"

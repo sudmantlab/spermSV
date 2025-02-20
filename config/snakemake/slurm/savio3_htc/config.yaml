@@ -1,12 +1,12 @@
 executor: slurm
-jobs: 20
+jobs: 40
 printshellcmds: True
 default-resources: 
   slurm_account: 'co_genomicdata'
   slurm_partition: 'savio3_htc'
   qos: 'genomicdata_htc3_normal'
   mem_mb: f"{attempt * 24000}"
-  runtime: 4320
+  runtime: 2400
 set-resources:
   hifiasm:
     mem_mb: f"{attempt * 128000}"
@@ -22,13 +22,26 @@ set-resources:
     mem_mb: f"{attempt * 48000}"
   duplomap:
     mem_mb: f"{attempt * 48000}"
-  subset_training:
+  hprc_vg_index:
+    mem_mb: f"{attempt * 256000}"
+  hprc_vg_giraffe_align:
+    mem_mb: f"{attempt * 96000}"
+  hprc_vg_surject:
     mem_mb: f"{attempt * 48000}"
-  training2paf:
+  hprc_personalized_graph_index:
+    mem_mb: f"{attempt * 96000}"
+  hprc_personalized_kmer_counting:
+    mem_mb: 152000
+  hprc_personalized_haplotype_sampling:
     mem_mb: f"{attempt * 48000}"
-  multimap_analysis:
-    mem_mb: f"{attempt * 48000}"
-  train_error_model:
+  hprc_personalized_graph_construction:
+    mem_mb: f"{attempt * 60000}"
+  hprc_personalized_haplotype_mapping:
+    mem_mb: f"{attempt * 96000}"
+  hprc_personalized_surject:
+    # double check that this is adjusted if switching to htc4
+    mem_mb: min(1.5 * input.size_mb, 364000)
+  repeatmasker_scaffolded:
     mem_mb: f"{attempt * 128000}"
-  train_qscore_model:
-    mem_mb: f"{attempt * 128000}"
+  svbyeye_alignment:
+    mem_mb: f"{attempt * 48000}"
