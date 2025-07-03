@@ -6,7 +6,7 @@ default-resources:
   slurm_partition: 'savio3_htc'
   qos: 'genomicdata_htc3_normal'
   mem_mb: f"{attempt * 24000}"
-  runtime: 2400
+  runtime: 4320
 set-resources:
   hifiasm:
     mem_mb: f"{attempt * 128000}"
@@ -41,7 +41,7 @@ set-resources:
   hprc_personalized_surject:
     # double check that this is adjusted if switching to htc4
     mem_mb: min(1.5 * input.size_mb, 364000)
-  repeatmasker_scaffolded:
-    mem_mb: f"{attempt * 128000}"
   svbyeye_alignment:
+    mem_mb: f"{attempt * 48000}"
+  reverse_hg38_mapping:
     mem_mb: f"{attempt * 48000}"

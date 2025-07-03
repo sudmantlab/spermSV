@@ -1,5 +1,3 @@
-localrules: repeatmasker_scaffolded_to_bed
-
 rule hifiasm:
     input: get_fastqs_per_sample
     output:
@@ -255,36 +253,6 @@ rule cat_scaffolds:
         samtools faidx {output.fa}
         """
 
-rule repeatmasker_scaffolded:
-    input:
-        "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/{specimen}.diploid.fasta",
-    output:
-        out = "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/repeatmasker/{specimen}.diploid.fasta.out"
-    log:
-        "logs/assembly/hifiasm/{specimen}/{ref}_scaffolded/{specimen}.diploid.fasta.out.log"
-    conda:
-        "../envs/RepeatMasker.yml"
-    params:
-        engine = config['repeatmasker']['engine'],
-        species = config['repeatmasker']['species'],
-        outdir = "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/repeatmasker"
-    threads: 36
-    shell:
-        """
-        RepeatMasker -pa {threads} -engine {params.engine} -nocut -gff -species {params.species} -dir {params.outdir} {input} &> {log}
-        """
-
-rule repeatmasker_scaffolded_to_bed:
-    input:
-        "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/{specimen}.diploid.fasta.out"
-    output:
-        "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/{specimen}.diploid.fasta.bed"
-    threads: 1
-    shell:
-        """
-        awk 'BEGIN{{OFS="\t"}}NR>3 {{if($9=="C"){{strand="-"}}else{{strand="+"}}}}{{print $5,$6-1,$7,$10,".",strand}}' {input} > {output}
-        """
-
 rule svbyeye_alignment:
     input:
         "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{specimen}.{hap}.scaffold.fasta"
@@ -300,4 +268,201 @@ rule svbyeye_alignment:
     shell:
         """
         minimap2 -t {threads} -x asm20 -c --eqx --secondary=no {params.refgenome} {input} > {output}
+        """
+
+rule filter_hg38_canonical_chromosomes:
+    input:
+        "/global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.fa"
+    output:
+        fasta = "/global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.canonical.fa",
+        temp_chroms = temp("/global/scratch/users/stacy-l/references/hg38_HGSVC/canonical_chroms.txt")
+    threads: 1
+    conda:
+        "../envs/mapping.yml"
+    shell:
+        """
+        samtools faidx {input}
+        
+        # more precise matching
+        awk '$1 ~ /^chr[1-9]$/ || $1 ~ /^chr[1-2][0-9]$/ || $1 ~ /^chr[XYM]$/' {input}.fai | cut -f1 > {output.temp_chroms}
+        
+        # Check if we got any matches
+        if [ ! -s {output.temp_chroms} ]; then
+            echo "No chromosomes matched the pattern" >&2
+            exit 1
+        fi
+        
+        samtools faidx {input} -r {output.temp_chroms} > {output.fasta}
+        """
+
+rule filter_canonical_chromosomes:
+    input:
+        "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{specimen}.{hap}.scaffold.fasta"
+    output:
+        fasta = "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{specimen}.{hap}.scaffold.canonical.fasta",
+        temp_chroms = temp("output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/canonical_chroms.txt")
+    wildcard_constraints:
+        specimen = "[A-Za-z0-9]+"
+    threads: 1
+    conda:
+        "../envs/mapping.yml"
+    shell:
+        """
+        samtools faidx {input}
+        
+        grep "^chr" {input}.fai | grep -v -E "random|chrUn|_h[12]tg" | cut -f1 > {output.temp_chroms}
+        
+        samtools faidx {input} -r {output.temp_chroms} > {output.fasta}
+        """
+
+rule reverse_hg38_mapping:
+    input:
+        assembly = "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{specimen}.{hap}.scaffold.canonical.fasta",
+        ref = "/global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.canonical.fa"
+    output:
+        "output/assembly/hifiasm/{specimen}/reverse_chain/hg38_scaffolded/{specimen}.{hap}.paf"
+    wildcard_constraints:
+        specimen = "[A-Za-z0-9]+"
+    threads: 10
+    conda:
+        "../envs/mapping.yml"
+    shell:
+        """
+        # Reverse the order of mapping: reference genome is mapped to the assembly
+        minimap2 -t {threads} -x asm20 -c --eqx --secondary=no {input.assembly} {input.ref} > {output}
+        """
+
+rule reverse_hg38_chain:
+    input:
+        "output/assembly/hifiasm/{specimen}/reverse_chain/hg38_scaffolded/{specimen}.{hap}.paf"
+    output:
+        "output/assembly/hifiasm/{specimen}/reverse_chain/hg38_scaffolded/{specimen}.{hap}.chain"
+    threads: 1
+    shell:
+        """
+        code/paf2chain/target/release/paf2chain -i {input} > {output}
+        """
+
+rule split_canonical_fasta:
+    input:
+        "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/{specimen}.{hap}.scaffold.canonical.fasta"
+    output:
+        expand("output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/repeatmasker/split_fastas/{chr}.fa", allow_missing = True, chr = chrs) # for all chrs
+    conda:
+        "../envs/mapping.yml"
+    params:
+        outdir = "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/repeatmasker/split_fastas"
+    shell:
+        """
+        mkdir -p {params.outdir}
+        awk -v outdir="{params.outdir}" '
+        /^>/ {{
+            if (file) {{
+                close(file)
+            }}
+            filename = substr($0, 2)
+            sub(/_RagTag.*$/, "", filename)
+            file = outdir "/" filename ".fa"
+            print $0 > file
+            next
+        }}
+        {{ if (file) print > file }}' {input}
+        """
+
+rule repeatmasker_per_chr:
+    input:
+        "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/repeatmasker/split_fastas/{chr}.fa"
+    output:
+        "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/repeatmasker/per_chr/{chr}.fa.out"
+    log:
+        "logs/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/repeatmasker/{chr}.log"
+    conda:
+        "../envs/RepeatMasker.yml"
+    params:
+        engine = config['repeatmasker']['engine'],
+        species = config['repeatmasker']['species'],
+        outdir = "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/repeatmasker/per_chr"
+    threads: 4
+    resources:
+        mem_mb = 24000
+    shell:
+        """
+        RepeatMasker -pa {threads} \
+            -engine {params.engine} \
+            -nocut -gff \
+            -species {params.species} \
+            -dir {params.outdir} \
+            {input} &> {log}
+        """
+
+rule repeatmasker_to_bed:
+    input:
+        "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/repeatmasker/per_chr/{chr}.fa.out"
+    output:
+        temp("output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/repeatmasker/per_chr/{chr}.bed")
+    threads: 1
+    shell:
+        """
+        tail -n +4 {input} | \
+        awk 'BEGIN{{OFS="\t"}} 
+        {{
+            print $5, $6-1, $7, $10"#"$11, $1, $9
+        }}' > {output}
+        """
+
+rule combine_repeatmasker_beds:
+    input:
+        expand("output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/repeatmasker/per_chr/{chr}.bed", allow_missing = True, chr = chrs, hap = ['hap1', 'hap2'])
+    output:
+        bed = "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/repeatmasker/{specimen}.{hap}.repeatmasker.bed.gz",
+        tbi = "output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/repeatmasker/{specimen}.{hap}.repeatmasker.bed.gz.tbi"
+    wildcard_constraints:
+        specimen = "[A-Za-z0-9]+"
+    conda:
+        "../envs/mapping.yml"
+    threads: 1
+    shell:
+        """
+        cat {input} | sort -k1,1 -k2,2n | bgzip > {output.bed}
+        tabix -p bed {output.bed}
+        """
+
+rule create_ref_dict:
+    input:
+        "/global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.canonical.fa"
+    output:
+        "/global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.canonical.dict"
+    conda:
+        "/global/scratch/users/stacy-l/miniconda3/envs/gatk"
+    shell:
+        """
+        gatk CreateSequenceDictionary -R {input}
+        """
+
+rule liftover_hg38_scaffolded:
+    input:
+        vcf = "output/alignment/hg38_scaffolded/minimap2/standard/variants/sniffles_mosaic/{specimen}.vcf.gz",
+        chain = "output/assembly/hifiasm/{specimen}/reverse_chain/hg38_scaffolded/{specimen}.{hap}.chain",
+        ref = "/global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.canonical.fa",
+        ref_dict = "/global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.no_alt.canonical.dict"
+    output:
+        vcf = "output/alignment/hg38_scaffolded/minimap2/standard/variants/sniffles_mosaic/liftover/{specimen}.{hap}.hg38.vcf.gz",
+        reject = "output/alignment/hg38_scaffolded/minimap2/standard/variants/sniffles_mosaic/liftover/{specimen}.{hap}.rejected.vcf.gz"
+    log:
+        "logs/alignment/hg38_scaffolded/minimap2/standard/variants/sniffles_mosaic/liftover/{specimen}.{hap}.liftover.log"
+    conda:
+        "/global/scratch/users/stacy-l/miniconda3/envs/gatk"
+    params:
+        java_opts = "-Xmx24g"
+    shell:
+        """
+        gatk --java-options "{params.java_opts}" LiftoverVcf \
+            -I {input.vcf} \
+            -O {output.vcf} \
+            -C {input.chain} \
+            -R {input.ref} \
+            --REJECT {output.reject} \
+            --RECOVER_SWAPPED_REF_ALT true \
+            --WARN_ON_MISSING_CONTIG true \
+            --MAX_RECORDS_IN_RAM 100000 &> {log}
         """

@@ -4,11 +4,12 @@ channels:
   - conda-forge
 dependencies:
   # set up a base analysis environment with only core packages
+  - conda>=24.7.1
   - samtools
   - bedtools
   - seqtk
   - pybind11
-  - python>=3.12
+  - python>=3.9
   - numpy
   - pandas
   - snakemake-minimal

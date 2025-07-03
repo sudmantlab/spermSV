@@ -41,7 +41,6 @@ set-resources:
   hprc_personalized_surject:
     mem_mb: min(1.5 * input.size_mb, 256000)
   repeatmasker_scaffolded:
-    threads: 56
     mem_mb: 256000
   svbyeye_alignment:
     mem_mb: f"{attempt * 48000}"

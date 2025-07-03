@@ -69,11 +69,11 @@ rule all:
         expand("output/assembly/flagger/{specimen}/prediction_summary_final.tsv", specimen = [x for x in specimens if x != '900']),
         expand("output/assembly/hifiasm/{specimen}/quast/T2T_scaffolded/report.html", specimen = [x for x in specimens if x != '900']),
         expand("output/assembly/hifiasm/{specimen}/quast/hg38_scaffolded/report.html", specimen = [x for x in specimens if x != '900']),
-        expand("output/assembly/assembly_stats/{specimen}.{hap}.tsv", specimen = specimens, hap = ['hap1', 'hap2']),
-        expand("output/alignment/hprc_personalized/mapped/hprc-v1.1-mc-chm13.d9/{specimen}.surjected.bam", specimen = specimens),
-        'output/assembly/assembly_stats/all.tsv',
-        # coverage stats
+        expand("output/assembly/hifiasm/{specimen}/quast/raw/report.html", specimen = specimens),
         expand("output/alignment/{ref}_scaffolded/minimap2/standard/coverage_stats/{specimen}.coverage.html", ref = ['hg38', 'T2T'], specimen = [x for x in specimens if x != '900']),
+        expand("output/assembly/assembly_stats/{specimen}.{hap}.tsv", specimen = specimens, hap = ['hap1', 'hap2']),
+        'output/assembly/assembly_stats/all.tsv',
+        expand("output/assembly/hifiasm/{specimen}/hg38_scaffolded/{hap}/repeatmasker/{specimen}.{hap}.repeatmasker.bed.gz", specimen = [x for x in specimens if x != '900'], hap = ['hap1', 'hap2']),
         # variant calling
         # expand("analysis/{refalias}/denovo/files/minimap2/standard/variants/all.active.single_type.low_div.repeatmasker_insertions.tsv", refalias = ['hg38', 'hg38_scaffolded', 'T2T_scaffolded']),
         # expand("analysis/{refalias}/denovo/files/minimap2/standard/variants/all.qc_all.active.single_type.low_div.repeatmasker_insertions.tsv", refalias = ['hg38', 'hg38_scaffolded', 'T2T_scaffolded']),
