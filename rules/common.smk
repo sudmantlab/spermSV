@@ -3,7 +3,7 @@ sample_table = pd.read_table(config['sample_table'], index_col=False, dtype=str)
 specimens = sample_table['specimen'].unique()
 specimens_by_group = sample_table.groupby('group')['specimen'].unique().apply(list).to_dict()
 
-chrs = ['chr' + str(n) for n in np.arange(1, 22).tolist()+['X', 'Y']]
+chrs = ['chr' + str(n) for n in np.arange(1, 23).tolist()+['X', 'Y']]
 
 ### rules/make_symlinks.smk ###
 
