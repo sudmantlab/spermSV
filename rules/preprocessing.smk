@@ -1,9 +1,8 @@
 # Usage notes:
-# HiFiAdapterFilt is not managed under bioconda – it needs to be installed by cloning from the repo directly
-# note that I've made changes under a new fork to fix a couple of directory path issues w/ temp files
+# HiFiAdapterFilt is not managed under bioconda – it needs to be installed by cloning from the repo directly.
+# I've made changes under a new fork (stacy-l/HiFiAdapterFilt) to fix a couple of directory path issues w/ temp files.
 # that seemed to be specific to the bam input code. nicolas submitted a pull request for this, which hasn't
-# been accepted yet...
-# the fix is under a fork (stacy-l/HiFiAdapterFilt) – to be contributed to main later if this fixes the issue?
+# been accepted yet. This is likely fine because our samples all appear to be adapter-free (Revio pre-filtering).
 
 # below: adds HiFiAdapterFilt code directory to path if not already present
 repo_path = config['paths']['HiFiAdapterFilt']['repo']

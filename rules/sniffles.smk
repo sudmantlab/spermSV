@@ -1,3 +1,5 @@
+### Germline SVs ###
+
 rule sniffles_standard:
     input:
         bam = "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam",
@@ -31,10 +33,42 @@ rule sniffles_standard:
         --output-rnames &> {log}
         """
 
+
+rule sniffles_standard_scaffolded:
+    # The same rule as sniffles_standard, except it doesn't use a tandem repeat annotation file
+    # and uses the self assembly fasta as a reference.
+    input:
+        bam = "output/alignment/{ref}_scaffolded/{mapper}/standard/mapped/{specimen}.sorted.merged.bam",
+        index = "output/alignment/{ref}_scaffolded/{mapper}/standard/mapped/{specimen}.sorted.merged.bam.bai",
+        fasta = "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/{specimen}.diploid.fasta"
+    output:
+        vcf='output/alignment/{ref}_scaffolded/{mapper}/standard/variants/sniffles_standard/{specimen}.vcf.gz',
+        snf='output/alignment/{ref}_scaffolded/{mapper}/standard/variants/sniffles_standard/{specimen}.snf',
+        tbi='output/alignment/{ref}_scaffolded/{mapper}/standard/variants/sniffles_standard/{specimen}.vcf.gz.tbi'
+    wildcard_constraints:
+        specimen = '[A-Za-z0-9]+'
+    conda:
+        '../envs/sniffles.yml'
+    threads:
+        10
+    params:
+        mapq = config['sniffles']['mapq'],
+    log:
+        "logs/alignment/{ref}_scaffolded/{mapper}/standard/variants/sniffles_standard/{specimen}.log"
+    shell:
+        """
+        sniffles --input {input.bam} \
+        --vcf {output.vcf} \
+        --snf {output.snf} \
+        --reference {input.fasta} \
+        --threads {threads} \
+        --mapq {params.mapq} \
+        --output-rnames &> {log}
+        """
+
+### Mosaic SVs (low-frequency SVs) ###
+
 rule sniffles_mosaic:
-    # Calls mosaic (somatic) SVs using the --mosaic option.
-    # FOR NOW: try config with --minsupport=1; may need to configure minsupport-auto-mult (the coverage minsupport equation)
-    # worst case, enable --no-qc flag.
     input:
         bam = "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam",
         index = "output/alignment/{refalias}/{mapper}/standard/mapped/{specimen}.sorted.merged.bam.bai"
@@ -139,45 +173,9 @@ use rule sniffles_mosaic_qc_all as sniffles_mosaic_duplomap_qc_all with:
     log:
         "logs/alignment/{refalias}/{mapper}/duplomap/variants/sniffles_mosaic/{specimen}.qc_all.log"
 
-rule sniffles_standard_scaffolded:
-    """
-    The same rule as sniffles_standard, except it doesn't use a tandem repeat annotation file
-    and uses the self assembly fasta as a reference.
-    """
-    input:
-        bam = "output/alignment/{ref}_scaffolded/{mapper}/standard/mapped/{specimen}.sorted.merged.bam",
-        index = "output/alignment/{ref}_scaffolded/{mapper}/standard/mapped/{specimen}.sorted.merged.bam.bai",
-        fasta = "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/{specimen}.diploid.fasta"
-    output:
-        vcf='output/alignment/{ref}_scaffolded/{mapper}/standard/variants/sniffles_standard/{specimen}.vcf.gz',
-        snf='output/alignment/{ref}_scaffolded/{mapper}/standard/variants/sniffles_standard/{specimen}.snf',
-        tbi='output/alignment/{ref}_scaffolded/{mapper}/standard/variants/sniffles_standard/{specimen}.vcf.gz.tbi'
-    wildcard_constraints:
-        specimen = '[A-Za-z0-9]+'
-    conda:
-        '../envs/sniffles.yml'
-    threads:
-        10
-    params:
-        mapq = config['sniffles']['mapq'],
-    log:
-        "logs/alignment/{ref}_scaffolded/{mapper}/standard/variants/sniffles_standard/{specimen}.log"
-    shell:
-        """
-        sniffles --input {input.bam} \
-        --vcf {output.vcf} \
-        --snf {output.snf} \
-        --reference {input.fasta} \
-        --threads {threads} \
-        --mapq {params.mapq} \
-        --output-rnames &> {log}
-        """
-
 rule sniffles_mosaic_scaffolded:
-    """
-    The same rule as sniffles_mosaic, except it doesn't use a tandem repeat annotation file
-    and uses the self assembly fasta as a reference.
-    """
+    # The same rule as sniffles_mosaic, except it doesn't use a tandem repeat annotation file
+    # and uses the self assembly fasta as a reference.
     input:
         bam = "output/alignment/{ref}_scaffolded/{mapper}/standard/mapped/{specimen}.sorted.merged.bam",
         index = "output/alignment/{ref}_scaffolded/{mapper}/standard/mapped/{specimen}.sorted.merged.bam.bai",
@@ -218,11 +216,9 @@ rule sniffles_mosaic_scaffolded:
         """
 
 rule sniffles_mosaic_scaffolded_qc_all:
-    """
-    The same rule as sniffles_mosaic, except it doesn't use a tandem repeat annotation file (only compatible with hg38)
-    and uses the self assembly fasta as a reference.
-    Yields all candidates without filtering.
-    """
+    # The same rule as sniffles_mosaic, except it doesn't use a tandem repeat annotation file (only compatible with hg38)
+    # and uses the self assembly fasta as a reference.
+    # Yields all candidates without filtering.
     input:
         bam = "output/alignment/{ref}_scaffolded/{mapper}/standard/mapped/{specimen}.sorted.merged.bam",
         index = "output/alignment/{ref}_scaffolded/{mapper}/standard/mapped/{specimen}.sorted.merged.bam.bai",
@@ -261,15 +257,3 @@ rule sniffles_mosaic_scaffolded_qc_all:
         --mosaic-qc-strand={params.mosaic_qc_strand} \
         --dev-no-qc &> {log}
         """
-
-use rule sniffles_mosaic_scaffolded_qc_all as sniffles_mosaic_scaffolded_mapq_mod_qc_all with:
-    input:
-        bam = "output/alignment/{ref}_scaffolded/{mapper}/standard/mapped/{specimen}.sorted.merged.mapQ_modified.bam",
-        index = "output/alignment/{ref}_scaffolded/{mapper}/standard/mapped/{specimen}.sorted.merged.mapQ_modified.bam.bai",
-        fasta = "output/assembly/hifiasm/{specimen}/{ref}_scaffolded/{specimen}.diploid.fasta"
-    output:
-        vcf='output/alignment/{ref}_scaffolded/{mapper}/standard/variants/sniffles_mosaic/{specimen}.mapQ_modified.qc_all.vcf.gz',
-        snf='output/alignment/{ref}_scaffolded/{mapper}/standard/variants/sniffles_mosaic/{specimen}.mapQ_modified.qc_all.snf',
-        tbi='output/alignment/{ref}_scaffolded/{mapper}/standard/variants/sniffles_mosaic/{specimen}.mapQ_modified.qc_all.vcf.gz.tbi'
-    log:
-        "logs/alignment/{ref}_scaffolded/{mapper}/standard/variants/sniffles_mosaic/{specimen}.mapQ_modified.qc_all.log"

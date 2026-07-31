@@ -61,7 +61,7 @@ reference:
     microsat: "/global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_microsat.bed"
     repeatmasker: "/global/scratch/users/stacy-l/references/hg38_HGSVC/GRCh38_repeatmasker.bed"
     refseq: "/global/scratch/users/stacy-l/references/hg38_HGSVC/hg38.ncbiRefSeq.gtf.gz"
-    gencode: "/global/scratch/users/stacy-l/references/hg38_HGSVC/gencode.v44.basic.annotation.gff3.gz"
+    gencode: "/global/scratch/users/stacy-l/references/hg38_HGSVC/gencode.v48.basic.annotation.gff3.gz"
   benchmarks:
     svtier1: 
       all: "/global/scratch/users/stacy-l/spermSV/benchmarks/HG002/liftovervcf/hg38/HG002_hg38_SVs_Tier1_v0.6_withChr.vcf.gz"
